@@ -1,3 +1,6 @@
+//TODO: Add query params handling
+//TODO: Add Body suport
+
 /**
  * File Describes API routes.
  */
@@ -11,6 +14,15 @@ const ROUTE = Symbol("ROUTE");
 //Key represents : [optional] by default route path is taken by key name, unless NAME is given.
 const NAME = Symbol("NAME");
 //const PARAMS = Symbol("PARAMS"); 
+
+function warnLog(...message){
+    console.warn(...message);
+}
+
+
+function errorLog(...message){
+    console.error(...message);
+}
 
 const METHOD = {
     GET: 'GET',
@@ -28,15 +40,15 @@ const METHOD = {
  * ROUTE: Route object corresponding to tree (NOTE: this is auto generated in init function)
  */
 let Routes = {
-    
-        activation:{
-            [PROTOCOL]: METHOD.GET,
-            serialNumber: { 
-                [DYNAMIC]: true,
-                [PROTOCOL]: METHOD.PUT
-            }
-        },
-    
+
+    activation: {
+        [PROTOCOL]: METHOD.GET,
+        serialNumber: {
+            [DYNAMIC]: true,
+            [PROTOCOL]: METHOD.PUT
+        }
+    },
+
     org: {
         [PROTOCOL]: METHOD.GET,
 
@@ -45,9 +57,9 @@ let Routes = {
             fleet: {
                 id: {
                     [DYNAMIC]: true,
-                    activation:{
+                    activation: {
                         [PROTOCOL]: METHOD.GET,
-                        serialNumber: { 
+                        serialNumber: {
                             [DYNAMIC]: true,
                             [PROTOCOL]: METHOD.PUT
                         }
@@ -62,7 +74,7 @@ let Routes = {
 
             vehicle: {
                 [PROTOCOL]: METHOD.GET,
-                metadata:{
+                metadata: {
                     [PROTOCOL]: METHOD.GET,
                 }
 
@@ -99,9 +111,9 @@ class Route {
 
         if (args.length != this.dynamicCount) {
             //ERROR
-            console.log("WARNING : received wrong amount of variables [got:", args.length, " expected:", this.dynamicCount, "]");
+            errorLog("WARNING : received wrong amount of variables [got:", args.length, " expected:", this.dynamicCount, "]");
         }
-     
+
         if (this.fatherRoute) {
             let fatherArgs = args.slice(0, this.fatherRoute.dynamicCount);
             fPath = this.fatherRoute.path(...fatherArgs);
@@ -110,7 +122,10 @@ class Route {
         return fPath + DELIM + name;
     }
 
-    setBody(data){
+    setBody(data) {
+        if(this.protocol === METHOD.GET){
+            warnLog("body of GET request is mostly ignored, are you sure you meant to set body ?");
+        }
         this.body = data;
     }
 }
@@ -130,25 +145,36 @@ function isObject(value) {
  * @param {*} prefix Route object representing father route
  */
 function initRoutes(data, name = null, prefix = null) {
-    let curRoute = null;
+    let curRouteGetter = null;
     if (name) {
         if (data[NAME]) {
             name = data[NAME];
         }
         let protocol = data[PROTOCOL];
         let isDynamic = !!data[DYNAMIC];
-        curRoute = new Route(name, protocol, prefix, isDynamic);
-        data[ROUTE] = curRoute;
+        curRouteGetter = () => new Route(name, protocol, prefix, isDynamic);
+        Object.defineProperty(data, ROUTE, { get: curRouteGetter });
+        //data[ROUTE] = curRouteGetter;
     }
     Object.keys(data).forEach(key => {
         if (isObject(data[key])) {
-            initRoutes(data[key], key, curRoute);
+            initRoutes(data[key], key, curRouteGetter && curRouteGetter());
         }
     });
 }
 
+
 initRoutes(Routes);
 
-export {Routes,METHOD,ROUTE};
+function test() {
+    let r = Routes.org.id;
+    console.log("T:", r[ROUTE]);
+    console.log("T:", r[ROUTE].path());
+    return
+}
+
+test();
+
+//export {Routes,METHOD,ROUTE};
 
 

@@ -1,12 +1,7 @@
-//TODO: add exception and logging properties.
-
-/**
- * File Describes API routes.
- */
 
 //Key represents :  protocol used in route (i.e. GET)
 const PROTOCOL = Symbol("PROTOCOL");
-//Key represents : if current path segment is dynamiclly supplied (i.e. generated id)
+//Key represents : if current path segment is dynamically supplied (i.e. generated id)
 const DYNAMIC = Symbol("DYNAMIC");
 //Key represents : [private usage] a part of the route tree section (non leaf)
 const ROUTE = Symbol("ROUTE");
@@ -14,14 +9,15 @@ const ROUTE = Symbol("ROUTE");
 const NAME = Symbol("NAME");
 const QUERY = Symbol("QUERY");
 const BODY = Symbol("BODY");
+const RESPONSE = Symbol("RESPONSE");
 
-let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY };
+let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY, RESPONSE };
 
 const METHOD = {
     GET: 'GET',
     POST: 'POST',
     PUT: 'PUT',
-    DELETE: 'DELETE'
+    DELETE: 'DELETE',
 }
 
 const IS_OBJ = (e) => (e !== null && typeof e === "object");
@@ -37,7 +33,6 @@ function errorLog(...message) {
 }
 
 function getQueryString(queryObject) {
-    console.log("queryObject", queryObject);
     if (!queryObject) return "";
     const OPEN_BRACE = '[';
     const QUERY_DELIM = '?';
@@ -74,7 +69,7 @@ function pathOptions(pathArgs, queryParams, bodyParams) {
  */
 class Route {
 
-    constructor(name, protocol = METHOD.GET, query, fatherRoute = null, isDynamic = false, dynamicKey = null) {
+    constructor(name, protocol = METHOD.GET, query, fatherRoute = null, isDynamic = false, dynamicKey = null, pathParts = []) {
         this.name = name;
         this.dynamicKey = dynamicKey;
         this.query = query;
@@ -84,6 +79,7 @@ class Route {
         this.fatherRoute = fatherRoute;
         this.protocol = protocol;
         this.dynamicCount = isDynamic ? 1 : 0;
+        this.pathParts = pathParts;
         if (this.fatherRoute) {
             this.dynamicCount += this.fatherRoute.dynamicCount;
         }
@@ -95,11 +91,12 @@ class Route {
      * @param  {...String} args path dynamic parts
      */
     path(options = {}) {
+        const DYNAMIC_SYM = ":";
         const DELIM = "/";
         let fPath = "";
         let pathArgLength = 0;
 
-        let { pathArgs, queryParams } = options;
+        let { pathArgs, queryParams, isMock } = options;
         pathArgs = pathArgs || this.pathArgs;
 
         if (pathArgs) {
@@ -112,9 +109,9 @@ class Route {
                 pathArgLength = pathArgs.length;
             }
         }
-        if (pathArgLength != this.dynamicCount) {
+        if ((pathArgLength != this.dynamicCount) && (!isMock)) {
             //ERROR
-            errorLog("WARNING : received wrong amount of path arguments [got:", pathArgLength, " expected:", this.dynamicCount, "]");
+            errorLog("WARNING : received wrong amount of path arguments for ", this.name, " [got:", pathArgLength, " expected:", this.dynamicCount, "]");
         }
 
         if (this.fatherRoute) {
@@ -125,19 +122,25 @@ class Route {
                 fatherArgs = Object.assign({}, pathArgs);
                 delete fatherArgs[this.dynamicKey];
             }
-            fPath = this.fatherRoute.path(pathOptions(fatherArgs));
+            fPath = this.fatherRoute.path(Object.assign({ isMock }, pathOptions(fatherArgs)));
         }
         let name = this.name;
         if (this.isDynamic) {
-            if (Array.isArray(pathArgs)) {
+            if (isMock) {
+                if (IS_STR(this.isDynamic))
+                    this.name = this.isDynamic;
+                let uniqueName = DYNAMIC_SYM + this.name;
+                name = uniqueName;
+            }
+            else if (Array.isArray(pathArgs)) {
                 name = pathArgs[this.dynamicCount - 1];
             }
             else if (IS_OBJ(pathArgs)) {
-                console.log("this.dynamicKey", pathArgs, this.dynamicKey)
+
                 if (!this.dynamicKey || !IS_STR(this.dynamicKey)) {
                     errorLog("Did not supply key for the path part : [", name, "]");
                 } else {
-                    console.log("PATH", pathArgs)
+
                     if (IS_UNDEF(pathArgs[this.dynamicKey])) {
                         errorLog(`Need to supply in options value for key [${this.dynamicKey}] for path part ${name}`);
                     } else {
@@ -147,13 +150,11 @@ class Route {
             }
         }
 
-
         let qParams = queryParams || this.queryParams;
         if (qParams && !Array.isArray(qParams)) {
             qParams = [qParams];
         }
 
-        console.log(">>>>", qParams);
         let qParamStr = qParams ? getQueryString(this.query(...qParams)) : "";
         return fPath + DELIM + name + qParamStr;
     }
@@ -188,11 +189,22 @@ function isObject(value) {
  * @param {*} name name of current route part
  * @param {*} prefix Route object representing father route
  */
-function initRoutes(data, name = null, prefix = null) {
+function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts = []) {
     let curRouteGetter = null;
     if (name) {
         if (data[NAME]) {
             name = data[NAME];
+        } else {
+            data[NAME] = name;
+        }
+        if (data[DYNAMIC]) {
+            let curNameCount = 0;
+            if (prevNames[name] !== undefined) {
+                curNameCount = prevNames[name] + 1;
+                name = name + curNameCount;
+            }
+            prevNames = Object.assign({}, prevNames, { [name]: curNameCount });
+            data[NAME] = name;
         }
         let defaultQuery = (...qParam) => {
             if (qParam.length > 0) {
@@ -208,30 +220,31 @@ function initRoutes(data, name = null, prefix = null) {
             query = () => { errorLog("Ignoring query:\n", errorMessage); }
         }
         let protocol = data[PROTOCOL] || METHOD.GET;
+        data[PROTOCOL] = protocol;
         let isDynamic = !!data[DYNAMIC];
-        curRouteGetter = () => new Route(name, protocol, query, prefix, isDynamic, data[DYNAMIC]);
+        pathParts.push(data[NAME]);
+        curRouteGetter = () => new Route(name, protocol, query, prefix, isDynamic, data[DYNAMIC], pathParts);
         Object.defineProperty(data, ROUTE, { get: curRouteGetter });
         //data[ROUTE] = curRouteGetter;
     }
+
     Object.keys(data).forEach(key => {
         if (isObject(data[key])) {
-            initRoutes(data[key], key, curRouteGetter && curRouteGetter());
+            initRoutes(data[key], key, curRouteGetter && curRouteGetter(), prevNames, [...pathParts]);
         }
     });
 }
 
 function getRoute(treePath, options = {}) {
-    console.log("OP",options);
     let { pathArgs, queryParams, bodyParams } = options;
     let route = treePath[ROUTE];
     if (bodyParams)
         route.setBody(bodyParams);
-    if (queryParams){
-        if(!Array.isArray(queryParams))
-            queryParams= [queryParams]
-            console.log("queryParams",queryParams);
+    if (queryParams) {
+        if (!Array.isArray(queryParams))
+            queryParams = [queryParams]
         route.setQueryParams(...queryParams);
-    }if (pathArgs)
+    } if (pathArgs)
         route.setPathArgs(pathArgs);
     return route;
 }
@@ -241,6 +254,6 @@ function getPath(treePath, options = {}) {
     return route.path();
 }
 
-export { METHOD, SYMBOLS, initRoutes, getPath, getRoute };
+export { METHOD, SYMBOLS, initRoutes, getPath, getRoute, pathOptions };
 
 

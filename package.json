@@ -1,0 +1,29 @@
+{
+  "name": "autoroutejs",
+  "version": "1.0.0",
+  "description": "An easy way to define maintain and verify routes",
+  "main": "RouteCreator.js",
+  "scripts": {
+    "build": "babel src -d lib",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikehn/autoRouteJs.git"
+  },
+  "keywords": [
+    "routes",
+    "networking"
+  ],
+  "author": "michael hasin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mikehn/autoRouteJs/issues"
+  },
+  "homepage": "https://github.com/mikehn/autoRouteJs#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@babel/preset-env": "^7.7.7"
+  }
+}

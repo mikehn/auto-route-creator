@@ -1,5 +1,5 @@
 
-import { SYMBOLS, METHOD, initRoutes, getRoute, getPath } from "./RouteCreator";
+import { SYMBOLS, METHOD, initRoutes, getRoute, getPath } from "../RouteCreator";
 /**
  * Routes tree definition, 
  * the following Symbols define:

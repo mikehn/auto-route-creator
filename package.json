@@ -1,6 +1,6 @@
 {
-  "name": "auto-route-js",
-  "version": "1.0.2",
+  "name": "auto-route-creator",
+  "version": "1.0.4",
   "description": "An easy way to define maintain and verify routes",
   "main": "lib/RouteCreator.js",
   "scripts": {

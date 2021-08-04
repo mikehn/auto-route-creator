@@ -46,17 +46,8 @@ function errorLog(...message) {
     console.error(...message);
 }
 
-function getQueryString(queryFunc, queryParams) {
-    const QUERY_DELIM = '?';
-    if (!queryParams) return ""
-    let qObject = queryParams;
-    if (Array.isArray(queryParams))
-        qObject = queryFunc(EMPTY, ...queryParams);
-    else if (typeof queryParams === 'object') {
-        qObject = queryFunc(Object.keys(queryParams), ...Object.values(queryParams));
-    }
-    return QUERY_DELIM + (new URLSearchParams(qObject).toString());
-
+function getQueryString(queryObject) {
+    return new URLSearchParams(queryObject).toString();
     // if (!queryObject) return "";
     // const OPEN_BRACE = '[';
     // const QUERY_DELIM = '?';
@@ -175,15 +166,15 @@ class Route {
         }
 
         let qParams = queryParams || this.queryParams;
-        // if (qParams && !Array.isArray(qParams)) {
-        //     qParams = [qParams];
-        // }
+        if (qParams && !Array.isArray(qParams)) {
+            qParams = [qParams];
+        }
 
-        let qParamStr = qParams ? getQueryString(this.query, qParams) : "";
+        let qParamStr = qParams ? getQueryString(this.query(...qParams)) : "";
         return fPath + DELIM + name + qParamStr;
     }
 
-    setQueryParams(queryParams) {
+    setQueryParams(...queryParams) {
         this.queryParams = queryParams;
     }
 
@@ -247,7 +238,7 @@ function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts 
             if (Array.isArray(query)) {
                 queryKeys = query;
                 innerQuery = (...params) => {
-                    if (params.length > queryKeys.length) {
+                    if (params.length >= queryKeys.length) {
                         let errorMessage = `Invalid QUERY supplied, expected ${queryKeys.length} Q-params got ${params.length} [${params}]`;
                         errorLog(errorMessage);
                     } else {
@@ -268,14 +259,11 @@ function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts 
 
         query = (keyNames, ...values) => {
             let sortedValues = [];
-            if (!keyNames) {
-                return innerQuery(...values);
-            }
             queryKeys.forEach(qKey => {
                 let keyIndex = (keyNames.indexOf(qKey));
                 sortedValues.push((keyIndex >= 0) ? values[keyIndex] : EMPTY);
             })
-            return innerQuery(...sortedValues);
+            return innerQuery(sortedValues);
         }
 
         let protocol = data[PROTOCOL] || METHOD.GET;
@@ -304,9 +292,9 @@ function getRoute(treePath, options = {}) {
     if (bodyParams)
         route.setBody(bodyParams);
     if (queryParams) {
-        // if (!Array.isArray(queryParams))
-        //     queryParams = [queryParams]
-        route.setQueryParams(queryParams);
+        if (!Array.isArray(queryParams))
+            queryParams = [queryParams]
+        route.setQueryParams(...queryParams);
     } if (pathArgs)
         route.setPathArgs(pathArgs);
     return route;

@@ -24,8 +24,8 @@ let passengersQueryParams = ({ ageLimit, heightLimit }) => {
 let getCarsQueryParams = (carsLimit, carsType, carsColor) => ({ carsLimit, carsType, carsColor });
 let getSpeedQueryParams = (isKm) => ({ isKm });
 
-let speedPostBody = (speed) => ({ speed });
-let speedPostQuery = (isKm) => ({ isKm });
+let speedPostBody = (speed) => ({speed});
+let speedPostQuery = (isKm) => ({isKm});
 
 const ROUTES1 = {
 
@@ -61,7 +61,7 @@ const ROUTES2 = {
         [PROTOCOL]: METHOD.GET,
         id: {
             [DYNAMIC]: true,
-            [QUERY]: ["limit", "type", "color"],
+            [QUERY]: getCarsQueryParams,
             passenger: {
                 [PROTOCOL]: METHOD.GET,
                 [QUERY]: passengersQueryParams,
@@ -96,14 +96,12 @@ const ROUTES2 = {
 initRoutes(ROUTES1);
 initRoutes(ROUTES2);
 
-// Sending path arguments as an object ,and  Query params an array
+console.log("path ", getPath(ROUTES1.cars.id, { pathArgs: "MIKE", queryParams: [10, "subaru", "red"] }));
 mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { cid: "mike" }, queryParams: [10, "subaru", "red"] }));
-//Sending path arguments as a string (works for single path), and Query param as object
-mockFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE", queryParams: {color:"gold"} }));
+mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: "MIKE", queryParams: [10, "subaru", "red"] }));
 
 mockFetch(getRoute(ROUTES1.cars.id.passenger.id, { pathArgs: { cid: "mike", pid: "p1" } }));
-// user defined query params
-mockFetch(getRoute(ROUTES1.cars.id.speed2, { pathArgs: { cid: "fiat" }, queryParams:"isKm=true", bodyParams: 120 }))
+mockFetch(getRoute(ROUTES1.cars.id.speed2,{pathArgs:{ cid: "fiat" },queryParams:{isKm:true},bodyParams:120}))
 
 /**
  * Fake fetch API to simulate real use case

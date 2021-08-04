@@ -50,10 +50,12 @@ function getQueryString(queryFunc, queryParams) {
     const QUERY_DELIM = '?';
     if (!queryParams) return ""
     let qObject = queryParams;
+    console.log("queryParams", queryParams,Array.isArray(queryParams),typeof queryParams === 'object')
     if (Array.isArray(queryParams))
         qObject = queryFunc(EMPTY, ...queryParams);
     else if (typeof queryParams === 'object') {
-        qObject = queryFunc(Object.keys(queryParams), ...Object.values(queryParams));
+        console.log(Object.keys(queryParams), Object.values(queryParams))
+        qObject = queryFunc(Object.keys(queryParams), Object.values(queryParams));
     }
     return QUERY_DELIM + (new URLSearchParams(qObject).toString());
 
@@ -273,9 +275,10 @@ function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts 
             }
             queryKeys.forEach(qKey => {
                 let keyIndex = (keyNames.indexOf(qKey));
+                console.log("QKEY",qKey,keyIndex)
                 sortedValues.push((keyIndex >= 0) ? values[keyIndex] : EMPTY);
             })
-            return innerQuery(...sortedValues);
+            return innerQuery(sortedValues);
         }
 
         let protocol = data[PROTOCOL] || METHOD.GET;

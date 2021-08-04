@@ -102,8 +102,7 @@ mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { cid: "mike" }, queryParams: [1
 mockFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE", queryParams: {color:"gold"} }));
 
 mockFetch(getRoute(ROUTES1.cars.id.passenger.id, { pathArgs: { cid: "mike", pid: "p1" } }));
-// user defined query params
-mockFetch(getRoute(ROUTES1.cars.id.speed2, { pathArgs: { cid: "fiat" }, queryParams:"isKm=true", bodyParams: 120 }))
+mockFetch(getRoute(ROUTES1.cars.id.speed2, { pathArgs: { cid: "fiat" }, queryParams: { isKm: true }, bodyParams: 120 }))
 
 /**
  * Fake fetch API to simulate real use case

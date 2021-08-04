@@ -53,7 +53,8 @@ function getQueryString(queryFunc, queryParams) {
     if (Array.isArray(queryParams))
         qObject = queryFunc(EMPTY, ...queryParams);
     else if (typeof queryParams === 'object') {
-        qObject = queryFunc(Object.keys(queryParams), ...Object.values(queryParams));
+        Object.entries()
+        qObject = queryFunc(Object.keys(queryParams), Object.values(queryParams));
     }
     return QUERY_DELIM + (new URLSearchParams(qObject).toString());
 
@@ -175,15 +176,15 @@ class Route {
         }
 
         let qParams = queryParams || this.queryParams;
-        // if (qParams && !Array.isArray(qParams)) {
-        //     qParams = [qParams];
-        // }
+        if (qParams && !Array.isArray(qParams)) {
+            qParams = [qParams];
+        }
 
         let qParamStr = qParams ? getQueryString(this.query, qParams) : "";
         return fPath + DELIM + name + qParamStr;
     }
 
-    setQueryParams(queryParams) {
+    setQueryParams(...queryParams) {
         this.queryParams = queryParams;
     }
 
@@ -275,7 +276,7 @@ function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts 
                 let keyIndex = (keyNames.indexOf(qKey));
                 sortedValues.push((keyIndex >= 0) ? values[keyIndex] : EMPTY);
             })
-            return innerQuery(...sortedValues);
+            return innerQuery(sortedValues);
         }
 
         let protocol = data[PROTOCOL] || METHOD.GET;
@@ -304,9 +305,9 @@ function getRoute(treePath, options = {}) {
     if (bodyParams)
         route.setBody(bodyParams);
     if (queryParams) {
-        // if (!Array.isArray(queryParams))
-        //     queryParams = [queryParams]
-        route.setQueryParams(queryParams);
+        if (!Array.isArray(queryParams))
+            queryParams = [queryParams]
+        route.setQueryParams(...queryParams);
     } if (pathArgs)
         route.setPathArgs(pathArgs);
     return route;

@@ -98,6 +98,7 @@ initRoutes(ROUTES2);
 
 // Sending path arguments as an object ,and  Query params an array
 mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { cid: "mike" }, queryParams: [10, "subaru", "red"] }));
+
 //Sending path arguments as a string (works for single path), and Query param as object
 mockFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE", queryParams: {color:"gold"} }));
 

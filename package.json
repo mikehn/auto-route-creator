@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/mikehn/autoRouteJs#readme",
   "devDependencies": {
-    "@babel/cli": "^7.7.7",
+    "@babel/cli": "^7.14.8",
     "@babel/core": "^7.7.7",
     "@babel/preset-env": "^7.7.7"
   }

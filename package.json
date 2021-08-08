@@ -25,5 +25,9 @@
     "@babel/cli": "^7.14.8",
     "@babel/core": "^7.7.7",
     "@babel/preset-env": "^7.7.7"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "faker": "^5.5.3"
   }
 }

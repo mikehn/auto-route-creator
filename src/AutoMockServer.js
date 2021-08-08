@@ -32,7 +32,7 @@ function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function basicConfiguration(app,routes) {
+function basicConfiguration(app, routes) {
 	app.use(express.json()); // for parsing application/json
 	app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
@@ -58,7 +58,7 @@ function addDynamicValues(val, req) {
 }
 
 function initServerPaths(route, app) {
-	//console.log(mockData);
+	console.log(mockData);
 	console.log(">>", dRoutes)
 	Object.keys(mockData).forEach((url) => {
 		Object.keys(mockData[url]).forEach((proto) => {
@@ -279,10 +279,17 @@ function updateDataSet(route, baseRoute) {
 }
 
 function updateRoutesData(routes) {
-	//routes = { "/": routes };
+	//let routes = { "/": routes2 };
 	let pathKey = "";
 	let rKeys = Object.values(routes).map((val) => ({ val, pathKey }));
+	//let rKeys = [{ val: routes, pathKey: "/" }];
+	console.log("RR", rKeys)
 	let paths = {};
+	routes[SYMBOLS.PROTOCOL] = routes[SYMBOLS.PROTOCOL] || GET;
+	 //routes[SYMBOLS.NAME] = "/";
+	 routes[SYMBOLS.ROUTE] = {name:"/"};
+	 updateDataSet(routes, "");
+
 	while (rKeys.length > 0) {
 		let ckey = rKeys.shift();
 		let curPaths = updateDataSet(ckey.val, ckey.pathKey);

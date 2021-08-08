@@ -1,5 +1,6 @@
 
-import { SYMBOLS, METHOD, initRoutes, getRoute, getPath } from "../RouteCreator";
+import { SYMBOLS, METHOD, initRoutes, getRoute, BIND, joinResponseRoutes } from "../RouteCreator";
+import { autoMock, getMockData } from "../AutoMockServer";
 /**
  * Routes tree definition, 
  * the following Symbols define:
@@ -8,11 +9,14 @@ import { SYMBOLS, METHOD, initRoutes, getRoute, getPath } from "../RouteCreator"
  * NAME : route path part, if not given key will be taken as route path part
  * ROUTE: Route object corresponding to tree (NOTE: this is auto generated in init function)
  */
-let { PROTOCOL, DYNAMIC, NAME, QUERY, BODY } = SYMBOLS;
+let { PROTOCOL, DYNAMIC, NAME, QUERY, BODY, RESPONSE } = SYMBOLS;
 
 
-
-let passengersQueryParams = ({ ageLimit, heightLimit }) => {
+/**
+ * Example query param function, you would use a function if you need some extra logic being applied
+ * should return a key value object representing the Query params
+ */
+const passengersQueryParams = ({ ageLimit, heightLimit }) => {
     if (!ageLimit)
         console.error("age must be supplied");
     if (ageLimit < 0 || ageLimit > 120) {
@@ -21,38 +25,41 @@ let passengersQueryParams = ({ ageLimit, heightLimit }) => {
     }
     return Object.assign({ ageLimit }, heightLimit ? { heightLimit } : {});
 }
-let getCarsQueryParams = (carsLimit, carsType, carsColor) => ({ carsLimit, carsType, carsColor });
-let getSpeedQueryParams = (isKm) => ({ isKm });
+
+/**
+ * Example query params as an array of strings, should be 
+ */
+const QUERY_PARAMS_SPEED = ["isKM"];
+
+const DKEY_CAR_ID = "CID";
 
 let speedPostBody = (speed) => ({ speed });
-let speedPostQuery = (isKm) => ({ isKm });
+
 
 const ROUTES1 = {
-
-    cars: {
-        [PROTOCOL]: METHOD.GET,
-        id: {
-            [DYNAMIC]: "cid",
-            [QUERY]: getCarsQueryParams,
-            passenger: {
-                [PROTOCOL]: METHOD.GET,
-                [QUERY]: passengersQueryParams,
-                id: {
-                    [DYNAMIC]: "pid",
+        cars: {
+            [PROTOCOL]: METHOD.GET,
+            id: {
+                [DYNAMIC]: DKEY_CAR_ID,
+                [QUERY]: ["carsLimit", "carsType", "carsColor"],
+                passenger: {
+                    [PROTOCOL]: METHOD.GET,
+                    [QUERY]: passengersQueryParams,
+                    id: {
+                        [DYNAMIC]: "pid",
+                    }
+                },
+                speedGet: {
+                    [NAME]: "speed",
+                    [PROTOCOL]: METHOD.GET,
+                    [QUERY]: QUERY_PARAMS_SPEED
+                },
+                speedPost: {
+                    [NAME]: "speed",
+                    [PROTOCOL]: METHOD.POST,
                 }
-            },
-            speed1: {
-                [NAME]: "speed",
-                [PROTOCOL]: METHOD.GET,
-                [QUERY]: getSpeedQueryParams
-            },
-            speed2: {
-                [NAME]: "speed",
-                [PROTOCOL]: METHOD.POST,
-                [BODY]: speedPostBody
             }
-        }
-    },
+        },
 };
 
 const ROUTES2 = {
@@ -60,7 +67,7 @@ const ROUTES2 = {
     cars: {
         [PROTOCOL]: METHOD.GET,
         id: {
-            [DYNAMIC]: true,
+            [DYNAMIC]: DKEY_CAR_ID,
             [QUERY]: ["limit", "type", "color"],
             passenger: {
                 [PROTOCOL]: METHOD.GET,
@@ -70,40 +77,96 @@ const ROUTES2 = {
                     [DYNAMIC]: true,
                 }
             },
-            speed1: {
+            speedGet: {
                 [NAME]: "speed",
                 [PROTOCOL]: METHOD.GET,
-                [QUERY]: getSpeedQueryParams
+                [QUERY]: QUERY_PARAMS_SPEED
             },
-            speed2: {
+            speedPost: {
                 [NAME]: "speed",
                 [PROTOCOL]: METHOD.POST,
                 [BODY]: speedPostBody,
-                [QUERY]: speedPostQuery
+                [QUERY]: QUERY_PARAMS_SPEED
             }
 
 
         }
 
     },
-
 };
 
+const MOCK_RESPONSE_DEFINITION = {
+        [RESPONSE]: {
+            template: { message: "hello world:String" }
+        },
+        cars: {
+            [RESPONSE]: {
+                template: {
+                    cars: [
+                        {
+                            id: "{{datatype.uuid}}:string",
+                            manufacturer: "{{vehicle.manufacturer}}:string",
+                            model: "{{vehicle.model}}:string",
+                        }
+                    ]
+                },
+                dynamicKeys: [BIND(DKEY_CAR_ID, "id")]
+            },
 
+            id: {
+                [RESPONSE]: {
+                    template: (url) => (req, mData) => {
+                        console.log("REQ", req.params)
+                        let allCars = mData["/cars"][METHOD.GET].cars;
+                        let id = url.split("/")[2];
+                        let selected = allCars.find(car => car.id === id);
+                        console.log(url.split("/"), id, selected);
+                        return selected;
 
+                    }
+                }
+            }
+        }
+}
 
-
-initRoutes(ROUTES1);
+initRoutes(joinResponseRoutes(ROUTES1, MOCK_RESPONSE_DEFINITION));
 initRoutes(ROUTES2);
 
-// Sending path arguments as an object ,and  Query params an array
-mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { cid: "mike" }, queryParams: [10, "subaru", "red"] }));
-//Sending path arguments as a string (works for single path), and Query param as object
-mockFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE", queryParams: {color:"gold"} }));
 
-mockFetch(getRoute(ROUTES1.cars.id.passenger.id, { pathArgs: { cid: "mike", pid: "p1" } }));
-// user defined query params
-mockFetch(getRoute(ROUTES1.cars.id.speed2, { pathArgs: { cid: "fiat" }, queryParams:"isKm=true", bodyParams: 120 }))
+// Sending path arguments as an object ,and  Query params an array
+mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { [DKEY_CAR_ID]: "mike" }, queryParams: [10, "subaru", "red"] }));
+//Fetch:[GET]:[https://my-mock.com/cars/mike?carsLimit=10&carsType=subaru&carsColor=red]
+
+//------------------------------
+
+//Sending path arguments as a string (works for single path), and Query param as object
+mockFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE", queryParams: { color: "gold" } }));
+//Fetch:[GET]:[https://my-mock.com/cars/MIKE?color=gold]
+
+//------------------------------
+
+//Sending multiple path args
+mockFetch(getRoute(ROUTES1.cars.id.passenger.id, { pathArgs: { [DKEY_CAR_ID]: "mike", pid: "p1" } }));
+//Fetch:[GET]:[https://my-mock.com/cars/mike/passenger/p1]
+
+//------------------------------
+
+// user defined query params, note that definition in ROUTES1.cars.id.speedPost has no BODY function, so what is given is sent
+mockFetch(getRoute(ROUTES1.cars.id.speedPost, { pathArgs: { [DKEY_CAR_ID]: "fiat" }, queryParams: "name=ferret&color=purple", bodyParams: 120 }))
+// Fetch:[POST]:[https://my-mock.com/cars/fiat/speed?name=ferret&color=purple]
+// with the following body:
+// 120
+
+//------------------------------
+
+// user defined query params, here in ROUTES2.cars.id.speedPost we have a body function, what is given will be sent to function
+mockFetch(getRoute(ROUTES2.cars.id.speedPost, { pathArgs: { [DKEY_CAR_ID]: "fiat" }, queryParams: "isKm=true", bodyParams: 120 }))
+// Fetch:[POST]:[https://my-mock.com/cars/fiat/speed?isKm=true]
+// with the following body:
+// { speed: 120 }
+
+//------------------------------
+
 
 /**
  * Fake fetch API to simulate real use case
@@ -112,10 +175,12 @@ mockFetch(getRoute(ROUTES1.cars.id.speed2, { pathArgs: { cid: "fiat" }, queryPar
 function mockFetch(route) {
     let BASE_API = "https://my-mock.com";
     let url = BASE_API + route.path();
-    console.log(`Fetch:[${route.protocol}]:[${url}]`);
+    console.log(`Fetch: [${route.protocol}]: [${url}]`);
     if (route.body) {
         console.log("with the following body:");
         console.log(route.body);
     }
 
 }
+
+autoMock(ROUTES1);

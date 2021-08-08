@@ -10,8 +10,8 @@ const NAME = Symbol("NAME");
 const QUERY = Symbol("QUERY");
 const BODY = Symbol("BODY");
 const RESPONSE = Symbol("RESPONSE");
-
-let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY, RESPONSE };
+const INDEX = Symbol("INDEX");
+let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY, RESPONSE, INDEX };
 
 const METHOD = {
     GET: 'GET',
@@ -93,7 +93,7 @@ function pathOptions(pathArgs, queryParams, bodyParams) {
  */
 class Route {
 
-    constructor(name, protocol = METHOD.GET, query, fatherRoute = null, isDynamic = false, dynamicKey = null, pathParts = []) {
+    constructor(name, protocol = METHOD.GET, query, fatherRoute = null, isDynamic = false, dynamicKey = null, pathParts = [], bodyFunc = null) {
         this.name = name;
         this.dynamicKey = dynamicKey;
         this.query = query;
@@ -107,8 +107,17 @@ class Route {
         if (this.fatherRoute) {
             this.dynamicCount += this.fatherRoute.dynamicCount;
         }
-        this.body = null;
+        this.bodyFunc = bodyFunc;
+        this.bodyData = null;
     }
+
+    get body() {
+        if (typeof this.bodyFunc === "function") {
+            return this.bodyFunc(this.bodyData);
+        }
+        return this.bodyData;
+    }
+
 
     /**
      * get current route path with the supplied dynamic parts
@@ -191,7 +200,7 @@ class Route {
         if (this.protocol === METHOD.GET) {
             warnLog("body of GET request is mostly ignored, are you sure you meant to set body ?");
         }
-        this.body = data;
+        this.bodyData = data;
     }
 
     setPathArgs(pathArgs) {
@@ -286,7 +295,7 @@ function initRoutes(data, name = null, prefix = null, prevNames = {}, pathParts 
             pathParts.push(data[DYNAMIC]);
         else
             pathParts.push(data[NAME]);
-        curRouteGetter = () => new Route(name, protocol, query, prefix, isDynamic, data[DYNAMIC], pathParts);
+        curRouteGetter = () => new Route(name, protocol, query, prefix, isDynamic, data[DYNAMIC], pathParts, data[BODY]);
         Object.defineProperty(data, ROUTE, { get: curRouteGetter });
         //data[ROUTE] = curRouteGetter;
     }
@@ -317,6 +326,29 @@ function getPath(treePath, options = {}) {
     return route.path();
 }
 
-export { METHOD, SYMBOLS, initRoutes, getPath, getRoute, pathOptions };
+
+/**
+ * returns an object containing a union of both entities, 
+ * note that only response data is taken from responseRoutes any other data is ignored
+ * @param {Object} routes represents the main route definition object
+ * @param {Object} responseRoutes represents only the response sections of the definition object
+ * @returns an object containing a union of both entities, note that only response data is taken from responseRoutes any other data is ignored
+ */
+function joinResponseRoutes(routes, responseRoutes) {
+    let keys = Object.keys(routes);
+
+    if (responseRoutes[RESPONSE]) {
+        routes[RESPONSE] = responseRoutes[RESPONSE];
+    }
+    keys.forEach(key => {
+        if (responseRoutes[key])
+            joinResponseRoutes(routes[key], responseRoutes[key])
+    })
+    return routes;
+}
+
+const BIND = (dKey, rKey) => `${dKey}:${rKey}`;
+
+export { METHOD, SYMBOLS, initRoutes, getPath, getRoute, pathOptions, joinResponseRoutes, BIND };
 
 

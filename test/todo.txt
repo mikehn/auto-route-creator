@@ -1,0 +1,2 @@
+TODO: Add multi protocol support in one method. (allow array in protocol method);
+TODO: Add support for more then json return type

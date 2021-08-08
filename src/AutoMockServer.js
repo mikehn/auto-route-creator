@@ -32,24 +32,52 @@ function getRandomInt(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+
+function initDRoutes(routes, baseRoute) {
+	//if (!!routes[SYMBOLS.DYNAMIC]) {
+	let proto = routes[SYMBOLS.PROTOCOL];
+	let isArray = Array.isArray(dRoutes[baseRoute]);
+	if (baseRoute.includes(":") && (!dRoutes[baseRoute] || !isArray || !dRoutes[baseRoute].includes(proto))) {
+		if (isArray) {
+			dRoutes[baseRoute].push(proto);
+		} else {
+			dRoutes[baseRoute] = [proto];
+		}
+	}
+	//}
+	let rKeys = Object.keys(routes);
+
+	//let currentRouteTree=routes;
+	rKeys.forEach(key => {
+		let route = routes[key];
+		let dKey = route[SYMBOLS.DYNAMIC];
+		let routeName = !!dKey ? ":" + dKey : getRoute(route).name;
+		initDRoutes(routes[key], baseRoute + "/" + routeName);
+	})
+}
+
 function basicConfiguration(app, routes) {
 	app.use(express.json()); // for parsing application/json
 	app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
 	//Logger
 	app.use("/", (req, res, next) => {
-		console.log("Received: ", req.url);
+		log(`Req:[${req.method}]:${req.url}`);
 		next();
 	});
+	// Init Dynamic routes
+	initDRoutes(routes, "");
 }
 
-function addDynamicValues(val, req) {
+
+
+function addDynamicValues(val, req, proto) {
 	if (typeof val === 'function') {
-		return val(req, mockData);
+		return val(req, mockData, proto);
 	} else {
 		if (isObject(val) || Array.isArray(val)) {
 			Object.keys(val).forEach(key => {
-				val[key] = addDynamicValues(val[key], req)
+				val[key] = addDynamicValues(val[key], req, proto)
 			})
 		}
 	}
@@ -57,22 +85,39 @@ function addDynamicValues(val, req) {
 
 }
 
-function initServerPaths(route, app) {
-	console.log(mockData);
-	console.log(">>", dRoutes)
+
+function initPath(proto, req, res) {
+	let url = req.baseUrl + req.path;
+
+	if (!mockData[url]) {
+		res.send(EMPTY_RES);
+		return;
+	}
+
+	if (proto == METHOD.DELETE) {
+	}
+	if (proto == METHOD.PUT) {
+		mockData[url][METHOD.GET] = req.body;
+	}
+	res.json(addDynamicValues(mockData[url][proto], req, proto));
+}
+
+function initServerPaths(app) {
+	//console.log(mockData);
+	Object.keys(dRoutes).forEach(route => {
+		let protocolStrList = dRoutes[route];
+		protocolStrList.forEach(proto => {
+			app[AppMethod[proto]](route, (req, res) => {
+				initPath(proto, req, res);
+			})
+		})
+	})
+
 	Object.keys(mockData).forEach((url) => {
 		Object.keys(mockData[url]).forEach((proto) => {
 			let protocolStr = AppMethod[proto];
-			app[protocolStr](url, (req, res, next) => {
-
-				if (proto == METHOD.DELETE) {
-				}
-				if (proto == METHOD.PUT) {
-					mockData[url][METHOD.GET] = req.body;
-				}
-
-				res.json(addDynamicValues(mockData[url][proto], req));
-
+			app[protocolStr](url, (req, res) => {
+				initPath(proto, req, res);
 			});
 		});
 		//let childRoute = route[key];
@@ -82,12 +127,13 @@ function initServerPaths(route, app) {
 	});
 }
 
+
 /////////////
 function startMock(routes, port, app = app) {
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
-	initServerPaths(routes, app);
-	app.listen(port, () => console.log(`Mock server on port ${port}!`));
+	initServerPaths(app);
+	app.listen(port, () => log(`Mock server on port ${port}!`));
 }
 
 function isString(value) {
@@ -116,7 +162,7 @@ function getStrParts(str) {
 		logError("received wrong string template expected <name>:<type>");
 	}
 	if (parts.length == 1) {
-		console.log(parts[0], " no type was supplied assuming string");
+		log(parts[0], " no type was supplied assuming string");
 		parts = [parts[0], "string"];
 	}
 	return { name: parts[0], type: parts[1] };
@@ -214,11 +260,6 @@ function getAllValuesBykey(data, key) {
 }
 
 function addMockData(rUrl, routeProtocol, data, did) {
-	// console.log("DID", did, rUrl)
-	// if (did && !dRoutes[did]) {
-	// 	let dPath = rUrl.substring(0, rUrl.lastIndexOf("/"));
-	// 	dRoutes[did] = dPath;
-	// }
 
 	if (!mockData[rUrl]) {
 		mockData[rUrl] = {};
@@ -283,12 +324,11 @@ function updateRoutesData(routes) {
 	let pathKey = "";
 	let rKeys = Object.values(routes).map((val) => ({ val, pathKey }));
 	//let rKeys = [{ val: routes, pathKey: "/" }];
-	console.log("RR", rKeys)
 	let paths = {};
 	routes[SYMBOLS.PROTOCOL] = routes[SYMBOLS.PROTOCOL] || GET;
-	 //routes[SYMBOLS.NAME] = "/";
-	 routes[SYMBOLS.ROUTE] = {name:"/"};
-	 updateDataSet(routes, "");
+	//routes[SYMBOLS.NAME] = "/";
+	routes[SYMBOLS.ROUTE] = { name: "/" };
+	updateDataSet(routes, "");
 
 	while (rKeys.length > 0) {
 		let ckey = rKeys.shift();

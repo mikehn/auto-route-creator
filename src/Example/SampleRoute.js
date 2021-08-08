@@ -1,6 +1,7 @@
 
 import { SYMBOLS, METHOD, initRoutes, getRoute, BIND, joinResponseRoutes } from "../RouteCreator";
-import { autoMock, getMockData } from "../AutoMockServer";
+import { autoMock, getMockData, setMockData } from "../AutoMockServer";
+import faker from "faker";
 /**
  * Routes tree definition, 
  * the following Symbols define:
@@ -37,29 +38,34 @@ let speedPostBody = (speed) => ({ speed });
 
 
 const ROUTES1 = {
-        cars: {
-            [PROTOCOL]: METHOD.GET,
-            id: {
-                [DYNAMIC]: DKEY_CAR_ID,
-                [QUERY]: ["carsLimit", "carsType", "carsColor"],
-                passenger: {
-                    [PROTOCOL]: METHOD.GET,
-                    [QUERY]: passengersQueryParams,
-                    id: {
-                        [DYNAMIC]: "pid",
-                    }
-                },
-                speedGet: {
-                    [NAME]: "speed",
-                    [PROTOCOL]: METHOD.GET,
-                    [QUERY]: QUERY_PARAMS_SPEED
-                },
-                speedPost: {
-                    [NAME]: "speed",
-                    [PROTOCOL]: METHOD.POST,
+    cars: {
+        [PROTOCOL]: METHOD.GET,
+        id: {
+            [DYNAMIC]: DKEY_CAR_ID,
+            [QUERY]: ["carsLimit", "carsType", "carsColor"],
+            passenger: {
+                [PROTOCOL]: METHOD.GET,
+                [QUERY]: passengersQueryParams,
+                id: {
+                    [DYNAMIC]: "pid",
                 }
+            },
+            speedGet: {
+                [NAME]: "speed",
+                [PROTOCOL]: METHOD.GET,
+                [QUERY]: QUERY_PARAMS_SPEED
+            },
+            speedPost: {
+                [NAME]: "speed",
+                [PROTOCOL]: METHOD.POST,
             }
         },
+        permissions: {
+            users: {
+
+            }
+        }
+    },
 };
 
 const ROUTES2 = {
@@ -96,38 +102,52 @@ const ROUTES2 = {
 };
 
 const MOCK_RESPONSE_DEFINITION = {
+    [RESPONSE]: {
+        template: { message: "hello world:String" }
+    },
+    cars: {
         [RESPONSE]: {
-            template: { message: "hello world:String" }
+            template: {
+                cars: [
+                    {
+                        id: "{{datatype.uuid}}:string",
+                        manufacturer: "{{vehicle.manufacturer}}:string",
+                        model: "{{vehicle.model}}:string",
+                    }
+                ]
+            },
+            dynamicKeys: [BIND(DKEY_CAR_ID, "id")]
         },
-        cars: {
+
+        id: {
             [RESPONSE]: {
-                template: {
-                    cars: [
-                        {
-                            id: "{{datatype.uuid}}:string",
-                            manufacturer: "{{vehicle.manufacturer}}:string",
-                            model: "{{vehicle.model}}:string",
-                        }
-                    ]
-                },
-                dynamicKeys: [BIND(DKEY_CAR_ID, "id")]
+                template: (url) => (req, mData, proto) => {
+                    let allCars = mData["/cars"][METHOD.GET].cars;
+                    let id = req.params[DKEY_CAR_ID];
+                    let selected = allCars.find(car => car.id === id);
+                    let vin = faker.vehicle.vin();
+                    let data = Object.assign({ vin }, selected);
+
+                    // without this line, mock will revaluate vin every time (see speed as an example)
+                    setMockData(url, proto, data);
+                    return data;
+                }
             },
 
-            id: {
+            speedGet: {
                 [RESPONSE]: {
-                    template: (url) => (req, mData) => {
-                        console.log("REQ", req.params)
-                        let allCars = mData["/cars"][METHOD.GET].cars;
-                        let id = url.split("/")[2];
-                        let selected = allCars.find(car => car.id === id);
-                        console.log(url.split("/"), id, selected);
-                        return selected;
-
+                    template: () => (req) => {
+                        let isKM = !(req.query && req.query.isKM === "false");
+                        //Note we did not set mock data, every time this route will be called, function revaluates.
+                        return { speed: `${faker.datatype.number(160 * (isKM ? 1 : 0.62))}${isKM ? "kph" : "mph"}` };
                     }
                 }
             }
-        }
+        },
+
+    }
 }
+
 
 initRoutes(joinResponseRoutes(ROUTES1, MOCK_RESPONSE_DEFINITION));
 initRoutes(ROUTES2);

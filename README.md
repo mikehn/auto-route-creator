@@ -87,4 +87,4 @@ with a few additions, you can get an automatic mock server filled with random va
 ```
 
 [npm-image]: https://img.shields.io/npm/v/react-dropdown.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/auto-route-creator
+[npm-url]: https://npmjs.org/package/auto-route-creator.svg

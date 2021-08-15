@@ -6,7 +6,7 @@
   "module": "dist/index.js",
   "scripts": {
     "build": "babel src -d lib",
-    "test": "node lib/example/SampleRoute.js",
+    "test": "babel src -d lib && node lib/test/SampleRoute.js",
     "build:npm": "SET NODE_ENV=production && if exist dist rmdir /s /q dist && mkdir dist && npx babel src --out-dir dist --copy-files",
     "publish:npm": "npm publish"
   },

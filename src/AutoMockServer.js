@@ -19,6 +19,7 @@ const TYPES = {
 	NUMBER: "number",
 	STRING: "STRING"
 };
+const IDENT = (a) => a;
 
 let dKeyValues = {};
 let dKeyObj = {};
@@ -72,18 +73,18 @@ function basicConfiguration(app, routes) {
 
 
 
-function addDynamicValues(val, req, proto) {
+function addDynamicValues(val, req, proto, filter = IDENT) {
 	if (typeof val === 'function') {
 		return val(req, mockData, proto);
 	} else {
-		if (isObject(val) || Array.isArray(val)) {
-			Object.keys(val).forEach(key => {
-				val[key] = addDynamicValues(val[key], req, proto)
-			})
-		}
+		// if (isObject(val) || Array.isArray(val)) {
+		// 	Object.keys(val).forEach(key => {
+		// 		console.log(">>>>=>", key, val);
+		// 		val[key] = addDynamicValues(val[key], req, proto, filter)
+		// 	})
+		// }
 	}
-	return val;
-
+	return filter(val, req);
 }
 
 
@@ -98,9 +99,10 @@ function initPath(proto, req, res) {
 	if (proto == METHOD.DELETE) {
 	}
 	if (proto == METHOD.PUT) {
-		mockData[url][METHOD.GET] = req.body;
+		mockData[url][METHOD.GET] = { data: req.body };
 	}
-	res.json(addDynamicValues(mockData[url][proto], req, proto));
+	let mockObj = mockData[url][proto];
+	res.json(addDynamicValues(mockObj.data, req, proto, mockObj.filter));
 }
 
 function initServerPaths(app) {
@@ -263,13 +265,15 @@ function getAllValuesBykey(data, key) {
 	return { dkey: res, dkObj: data };
 }
 
-function addMockData(rUrl, routeProtocol, data, did) {
+function addMockData(rUrl, routeProtocol, data, route) {
 
 	if (!mockData[rUrl]) {
 		mockData[rUrl] = {};
 	}
 
-	mockData[rUrl][routeProtocol] = data;
+	mockData[rUrl][routeProtocol] = { data };
+	mockData[rUrl][routeProtocol].filter = (route[SYMBOLS.RESPONSE] && route[SYMBOLS.RESPONSE].filter) || IDENT;
+
 	routeMeta[rUrl] = routeMeta[rUrl] || {};
 	if (!routeMeta[rUrl][PROTOCOL]) routeMeta[rUrl][PROTOCOL] = [];
 	routeMeta[rUrl][PROTOCOL].push(routeProtocol);
@@ -293,7 +297,7 @@ function updateDataSet(route, baseRoute) {
 	let routRes = route[SYMBOLS.RESPONSE];
 	if (!routRes) {
 		pathList.forEach((path) => {
-			addMockData(path, routeProtocol, EMPTY_RES, route[SYMBOLS.DYNAMIC]);
+			addMockData(path, routeProtocol, EMPTY_RES, route);
 		});
 		return pathList;
 	}
@@ -315,7 +319,7 @@ function updateDataSet(route, baseRoute) {
 				dKeyValues[`${path}|${name}`] = dkey; //TODO:M: extract to func
 				dKeyObj[name] = dkObj;
 			});
-			addMockData(path, routeProtocol, data, route[SYMBOLS.DYNAMIC]);
+			addMockData(path, routeProtocol, data, route);
 		});
 	}
 
@@ -358,16 +362,16 @@ let autoMock = (routes, options) => startMock(routes, options, app);
 
 function getMockData(path, protocol) {
 	if (mockData[path]) {
-		return mockData[path][protocol];
+		return mockData[path][protocol].data;
 	}
 	return null;
 }
 
-function setMockData(path, protocol, data) {
+function setMockData(path, protocol, data, filter) {
 	if (!mockData[path]) {
 		mockData[path] = {};
 	}
-	mockData[path][protocol] = data;
+	mockData[path][protocol] = { data, filter };
 }
 
 export { autoMock, getMockData, setMockData }

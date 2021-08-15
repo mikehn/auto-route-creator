@@ -41,9 +41,9 @@ let speedPostBody = (speed) => ({ speed });
 const ROUTES1 = {
     cars: {
         [PROTOCOL]: METHOD.GET,
+        [QUERY]: ["limit", "start", "model"],
         id: {
             [DYNAMIC]: DKEY_CAR_ID,
-            [QUERY]: ["carsLimit", "carsType", "carsColor"],
             passenger: {
                 [PROTOCOL]: METHOD.GET,
                 [QUERY]: passengersQueryParams,
@@ -75,7 +75,7 @@ const ROUTES2 = {
         [PROTOCOL]: METHOD.GET,
         id: {
             [DYNAMIC]: DKEY_CAR_ID,
-            [QUERY]: ["limit", "type", "color"],
+            [QUERY]: ["limit", "type", "model"],
             passenger: {
                 [PROTOCOL]: METHOD.GET,
                 [QUERY]: passengersQueryParams,
@@ -104,7 +104,7 @@ const ROUTES2 = {
 
 const MOCK_RESPONSE_DEFINITION = {
     [RESPONSE]: {
-        template: { message: "hello world:String" }
+        template: { message: "hello world2:String" }
     },
     cars: {
         [RESPONSE]: {
@@ -115,9 +115,16 @@ const MOCK_RESPONSE_DEFINITION = {
                         manufacturer: "{{vehicle.manufacturer}}:string",
                         model: "{{vehicle.model}}:string",
                     }
-                ]
+                ],
             },
-            dynamicKeys: [BIND(DKEY_CAR_ID, "id")]
+            dynamicKeys: [BIND(DKEY_CAR_ID, "id")],
+            filter: (responseData, req) => {
+                let cars = responseData.cars;
+                let start = Number((req.query && req.query.start) || 0);
+                let limit = Number((req.query && req.query.limit) || cars.length + 1);
+                let model = (req.query && req.query.model) || null;
+                return cars.slice(start, start + limit).filter((car => model ? car.model === model : true));
+            }
         },
 
         id: {
@@ -155,7 +162,7 @@ initRoutes(ROUTES2);
 
 
 // Sending path arguments as an object ,and  Query params an array
-mockFetch(getRoute(ROUTES1.cars.id, { pathArgs: { [DKEY_CAR_ID]: "mike" }, queryParams: [10, "subaru", "red"] }));
+mockFetch(getRoute(ROUTES1.cars, { pathArgs: { [DKEY_CAR_ID]: "mike" }, queryParams: [10, "subaru", "red"] }));
 //Fetch:[GET]:[https://my-mock.com/cars/mike?carsLimit=10&carsType=subaru&carsColor=red]
 
 //------------------------------

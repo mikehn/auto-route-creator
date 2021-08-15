@@ -11,7 +11,7 @@ const QUERY = Symbol("QUERY");
 const BODY = Symbol("BODY");
 const RESPONSE = Symbol("RESPONSE");
 const INDEX = Symbol("INDEX");
-let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY, RESPONSE, INDEX };
+let SYMBOLS = { PROTOCOL, DYNAMIC, ROUTE, NAME, QUERY, BODY, RESPONSE, INDEX, FILTER };
 
 const METHOD = {
     GET: 'GET',

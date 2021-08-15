@@ -1,13 +1,14 @@
 {
   "name": "auto-route-creator",
-  "version": "1.0.8",
+  "version": "1.1.2",
   "description": "An easy way to define maintain and verify routes",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
     "build": "babel src -d lib",
     "test": "node lib/example/SampleRoute.js",
-    "publish:npm": "SET NODE_ENV=production && if exist dist rmdir /s /q dist && mkdir dist && npx babel src --out-dir dist --copy-files"
+    "build:npm": "SET NODE_ENV=production && if exist dist rmdir /s /q dist && mkdir dist && npx babel src --out-dir dist --copy-files",
+    "publish:npm": "npm publish"
   },
   "repository": {
     "type": "git",

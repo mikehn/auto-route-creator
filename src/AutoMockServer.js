@@ -25,6 +25,7 @@ let dKeyObj = {};
 let mockData = {};
 let routeMeta = {};
 let dRoutes = {};
+let dataSize = null;
 
 function getRandomInt(min, max) {
 	min = Math.ceil(min);
@@ -129,7 +130,10 @@ function initServerPaths(app) {
 
 
 /////////////
-function startMock(routes, port, app = app) {
+function startMock(routes, options = {}, app = app,) {
+	let port = options.port || PORT;
+	dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE
+
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
 	initServerPaths(app);
@@ -212,7 +216,7 @@ function updateArrayData(arr, params) {
 	const TEMPLATE_LOC = 0;
 	if (!arr || arr.length == 0) return;
 	let template = arr[TEMPLATE_LOC];
-	let data = new Array(DEFAULT_DATA_SET_SIZE);
+	let data = new Array(dataSize);
 	for (let i = 0; i < data.length; ++i) {
 		data[i] = dataParser(template, params);
 	}
@@ -350,7 +354,7 @@ function updateRoutesData(routes) {
 
 //updateDataSet(Routes.api.example.test);
 
-let autoMock = (routes, port) => startMock(routes, port || PORT, app);
+let autoMock = (routes, options) => startMock(routes, options, app);
 
 function getMockData(path, protocol) {
 	if (mockData[path]) {

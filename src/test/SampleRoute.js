@@ -1,6 +1,7 @@
+import { AutoMock, RouteCreator } from "../index";
 
-import { SYMBOLS, METHOD, initRoutes, getRoute, BIND, joinResponseRoutes } from "../RouteCreator";
-import { autoMock, getMockData, setMockData } from "../AutoMockServer";
+let { SYMBOLS, METHOD, initRoutes, getRoute, joinResponseRoutes, BIND } = RouteCreator;
+let { mock, setMockData } = AutoMock;
 import faker from "faker";
 /**
  * Routes tree definition, 
@@ -203,4 +204,4 @@ function mockFetch(route) {
 
 }
 
-autoMock(ROUTES1);
+mock(ROUTES1);

@@ -1,7 +1,7 @@
 import { AutoMock, RouteCreator } from "auto-route-creator";
 import { DKEY_CAR_ID } from "./RoutesDefinitionExample";
-let { getRoute, BIND, METHOD, SYMBOLS } = RouteCreator;
-let { autoMock, setMockData, getMockData } = AutoMock;
+let { BIND, METHOD, SYMBOLS } = RouteCreator;
+let { setMockData, getMockData } = AutoMock;
 
 const { RESPONSE } = SYMBOLS;
 

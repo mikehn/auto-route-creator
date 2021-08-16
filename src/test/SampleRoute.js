@@ -114,12 +114,14 @@ const MOCK_RESPONSE_DEFINITION = {
                         id: "{{datatype.uuid}}:string",
                         manufacturer: "{{vehicle.manufacturer}}:string",
                         model: "{{vehicle.model}}:string",
+                        pass:()=>()=>Math.floor(Math.random()*10)
                     }
                 ],
             },
             dynamicKeys: [BIND(DKEY_CAR_ID, "id")],
             filter: (responseData, req) => {
                 let cars = responseData.cars;
+                console.log(">",responseData)
                 let start = Number((req.query && req.query.start) || 0);
                 let limit = Number((req.query && req.query.limit) || cars.length + 1);
                 let model = (req.query && req.query.model) || null;

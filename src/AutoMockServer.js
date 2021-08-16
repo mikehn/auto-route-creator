@@ -77,12 +77,11 @@ function addDynamicValues(val, req, proto, filter = IDENT) {
 	if (typeof val === 'function') {
 		return val(req, mockData, proto);
 	} else {
-		// if (isObject(val) || Array.isArray(val)) {
-		// 	Object.keys(val).forEach(key => {
-		// 		console.log(">>>>=>", key, val);
-		// 		val[key] = addDynamicValues(val[key], req, proto, filter)
-		// 	})
-		// }
+		if (isObject(val) || Array.isArray(val)) {
+			Object.keys(val).forEach(key => {
+				val[key] = addDynamicValues(val[key], req, proto, IDENT)
+			})
+		}
 	}
 	return filter(val, req);
 }

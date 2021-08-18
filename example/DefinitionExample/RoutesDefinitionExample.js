@@ -11,7 +11,7 @@ import faker from "faker";
  * NAME : route path part, if not given key will be taken as route path part
  * ROUTE: Route object corresponding to tree (NOTE: this is auto generated in init function)
  */
-let { PROTOCOL, DYNAMIC, NAME, QUERY, BODY, RESPONSE } = SYMBOLS;
+let { PROTOCOL, DYNAMIC, NAME, QUERY, BODY } = SYMBOLS;
 
 
 /**

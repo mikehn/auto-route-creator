@@ -3,22 +3,29 @@ import { ROUTES1, ROUTES2, DKEY_CAR_ID } from "../DefinitionExample/RoutesDefini
 import fetch from "node-fetch";
 let { getRoute } = RouteCreator;
 
-// Sending path arguments as an object ,and  Query params an array
-fakeFetch(getRoute(ROUTES1.cars.id.checkups, { pathArgs: { [DKEY_CAR_ID]: "mike" }, queryParams: [2, 0, true] }));
-//Fetch:[GET]:[https://my-mock.com/cars/mike?carsLimit=10&carsType=subaru&carsColor=red]
-
+// Sending path arguments as an object 
+fakeFetch(getRoute(ROUTES1.cars.id, { pathArgs: { [DKEY_CAR_ID]: "mike" } }));
+//Fetch:[GET]:[https://my-mock.com/cars/mike]
 //------------------------------
 
-//Sending path arguments as a string (works for single path), and Query param as object
-fakeFetch(getRoute(ROUTES2.cars.id.checkups, { pathArgs: "MIKE", queryParams: { limit: 4 } }));
-//Fetch:[GET]:[https://my-mock.com/cars/MIKE?color=gold]
+//Sending path arguments as a string (works for single path)
+fakeFetch(getRoute(ROUTES2.cars.id, { pathArgs: "MIKE" }));
+//Fetch:[GET]:[https://my-mock.com/cars/MIKE]
+//------------------------------
 
+//Sending Query params as an object
+fakeFetch(getRoute(ROUTES1.cars, { queryParams: { limit: 4, startFrom: 2 } }));
+// Fetch: [GET]: [https://my-mock.com/cars?limit=4&startFrom=2]
+//------------------------------
+
+//Sending Query params as an array
+fakeFetch(getRoute(ROUTES1.cars, { queryParams: [4, 2, "honda"] }));
+// Fetch: [GET]: [https://my-mock.com/cars?limit=4&startFrom=2&manufacturer=honda]
 //------------------------------
 
 //Sending multiple path args
 fakeFetch(getRoute(ROUTES1.cars.id.passenger.id, { pathArgs: { [DKEY_CAR_ID]: "mike", pid: "p1" } }));
 //Fetch:[GET]:[https://my-mock.com/cars/mike/passenger/p1]
-
 //------------------------------
 
 // user defined query params, note that definition in ROUTES1.cars.id.speedPost has no BODY function, so what is given is sent
@@ -26,7 +33,6 @@ fakeFetch(getRoute(ROUTES1.cars.id.speedPost, { pathArgs: { [DKEY_CAR_ID]: "fiat
 // Fetch:[POST]:[https://my-mock.com/cars/fiat/speed?name=ferret&color=purple]
 // with the following body:
 // 120
-
 //------------------------------
 
 // user defined query params, here in ROUTES2.cars.id.speedPost we have a body function, what is given will be sent to function
@@ -34,7 +40,6 @@ fakeFetch(getRoute(ROUTES2.cars.id.speedPost, { pathArgs: { [DKEY_CAR_ID]: "fiat
 // Fetch:[POST]:[https://my-mock.com/cars/fiat/speed?isKm=true]
 // with the following body:
 // { speed: 120 }
-
 //------------------------------
 // Test the auto mock (run the Mock Server Usage Example - npm run mock:example)
 

@@ -41,11 +41,10 @@ let speedPostBody = (speed) => ({ speed });
 const ROUTES1 = {
     cars: {
         [PROTOCOL]: METHOD.GET,
+        [QUERY]: ["limit", "startFrom", "manufacturer"],
         id: {
             [DYNAMIC]: DKEY_CAR_ID,
-            checkups: {
-                [QUERY]: ["limit", "startFrom", "isPass"],
-            },
+
             passenger: {
                 [PROTOCOL]: METHOD.GET,
                 [QUERY]: passengersQueryParams,

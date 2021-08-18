@@ -42,8 +42,8 @@ const MY_ROUTES = {
 RouteCreator.initRoutes(MY_ROUTES)
 let CAR_ROUTE = getRoute(MY_ROUTES.cars.id, { pathArgs: { [DKEY_CAR_ID]: "1234" } });
 //Use this in your fetch commands
-console.log(CAR_ROUTE.path()); // Prints:   /cars/1234
-console.log(CAR_ROUTE.protocol);// Prints:   GET
+ // Prints:   /cars/1234
+// Prints:   GET
 
 export { MY_ROUTES };
 ```
@@ -155,6 +155,67 @@ To learn more read below
 ````Javascript
 year: ()=>()=>"200"+Math.floor(Math.random()*10), // will be regenerated on every request
 ````
+
+## Defining Request Routes
+
+Define your routes by creating a Object representing routes as a tree
+i.e. if you have the following route `/cars/:id/speed` it will be represented as 
+
+```Javascript
+let ROUTES = {
+    cars:{
+        id:{
+            [DYNAMIC]: "cid", //more on this below
+            speed:{
+                // route definitions  
+            }
+        }
+    }
+}
+```
+adding a different route `/cars/:id/passenger`  requires only to add another child under id.
+by using the following symbols, inside each paths object you can describe the request as follows:
+
+| Request Symbols  | Definition  |
+|---|---|
+| PROTOCOL  | used to define route protocol (defaults to GET, use RouteCreator.METHOD for enums)  |
+| DYNAMIC  | a string value that marks this part of route as dynamic, i.e. `/cars/:id` the id part is dynamic and should be supplied for request, if not an error will be issued. the value should be a unique name used to reference this id later on |
+| NAME  |  a string value used to change the default name of the path part, which is the path object key |
+| QUERY  | used to define the request query param keys, if wrong keys supplied a warning is issued, can receive a string array (i.e. `["limit","StartFrom"]`) defining the query keys, or a function for any custom validation or processing you might require (see [example](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)) |
+| BODY  | a function that return value is used to define the request body   |
+
+ 
+ once definition is complete, routes should  be initialized using the init function `initRoutes(ROUTES)`
+ 
+note this function works in place and does not return a value, this is to alow the definition object to retain its structure and features such as refactor auto complete and such.
+
+A full example of routes [here](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)
+
+## Using request routes definition
+once you have routes defined and initialized you can use them to generate your request path and headers by calling the `RouteCreator.getRoute` function
+
+for example 
+````Javascript
+let options = {
+     pathArgs: { "cid": "mike" }, // Note "cid" is the DYNAMIC name we gave earlier in route definition
+     queryParams: [2, 0, true] 
+};
+
+let  route = getRoute(ROUTES.cars.id.checkups, options); 
+// /cars/mike?carsLimit=10&carsType=subaru&carsColor=red
+````
+
+### getRoute API
+```Javascript
+getRoute(routeObject,Options)
+```
+* <b>routeObject</b> - is a path in the previously defined ROUTE object.
+* <b>Options</b> - an object in the following format `{pathArgs:..., queryParams:...,bodyParams:,...}` where:
+
+// WIP
+
+
+see full usage example [here](https://github.com/mikehn/autoRouteJs/blob/master/example/EndUsageExample/ClientUsageExample.js)
 
 
 

@@ -6,7 +6,7 @@ enables creating a quick automatic mock, using the defined routes.
 ## Installation
 
 ```
-$ npm install react-dropdown  --save
+$ npm install auto-route-creator  --save
 ```
 
 ## Basic Usage
@@ -182,7 +182,7 @@ by using the following symbols, inside each paths object you can describe the re
 | DYNAMIC  | a string value that marks this part of route as dynamic, i.e. `/cars/:id` the id part is dynamic and should be supplied for request, if not an error will be issued. the value should be a unique name used to reference this id later on |
 | NAME  |  a string value used to change the default name of the path part, which is the path object key |
 | QUERY  | used to define the request query param keys, if wrong keys supplied a warning is issued, can receive a string array (i.e. `["limit","StartFrom"]`) defining the query keys, or a function for any custom validation or processing you might require (see [example](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)) |
-| BODY  | a function that return value is used to define the request body   |
+| BODY  | function given here will be used on supplied body and replace route body with its return value   |
 
  
  once definition is complete, routes should  be initialized using the init function `initRoutes(ROUTES)`
@@ -207,10 +207,26 @@ let  route = getRoute(ROUTES.cars.id.checkups, options);
 
 ### getRoute API
 ```Javascript
-getRoute(routeObject,Options)
+let route = getRoute(routeObject,Options)
 ```
+gets the route object of the given path and options.
+
+<b>arguments</b>
 * <b>routeObject</b> - is a path in the previously defined ROUTE object.
 * <b>Options</b> - an object in the following format `{pathArgs:..., queryParams:...,bodyParams:,...}` where:
+  * `pathArgs` - holds the paths dynamic parts values, should be an object with the key matching the name given in the `[DYNAMIC]` part of the route and the value the path value. i.e. `{cid:1234}` will replace the car id part of the route with `1234`
+  * `queryParams` - hold the query param values can be an object with key/value matching the query param name and value or an array of values fitting query param declaration order
+  * bodyParams - holds body of message, can be in any format, if `[BODY]` was supplied in route, this value will be passed through the `[BODY]` function first. 
+
+<b>return value</b>
+
+ object representing the route and all its data
+object has following properties:
+
+* `route.path()` - returns the string representation of the path with query params and path parts
+* `route.body` -  request body 
+* `route.protocol` - request protocol
+
 
 // WIP
 

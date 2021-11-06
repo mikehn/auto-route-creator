@@ -96,3 +96,13 @@ function fetchFromMock(route) {
         });
 }
 
+
+function fetchExample(route) {
+    const BASE_API = "http://localhost:3004";
+    const URL = BASE_API + route.path();
+    let fetchOptions = {
+        method: route.protocol,
+        body: route.body
+    }
+    return fetch(URL, fetchOptions).then(rj => rj.json());
+}

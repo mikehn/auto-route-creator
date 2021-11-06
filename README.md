@@ -40,12 +40,25 @@ const MY_ROUTES = {
     }
 }
 RouteCreator.initRoutes(MY_ROUTES)
-let CAR_ROUTE = getRoute(MY_ROUTES.cars.id, { pathArgs: { [DKEY_CAR_ID]: "1234" } });
-//Use this in your fetch commands
- // Prints:   /cars/1234
-// Prints:   GET
-
 export { MY_ROUTES };
+
+
+//// Example usegae (this would be placed in logical locations in your app)
+
+let CAR_ROUTE = getRoute(MY_ROUTES.cars.id, { pathArgs: { [DKEY_CAR_ID]: "1234" } });
+
+fetchExample(CAR_ROUTE).then(car=>console.log());
+
+function fetchExample(route) {
+    const BASE_API = "http://localhost:3004";
+    const URL = BASE_API + route.path();
+    let fetchOptions = {
+        method: route.protocol,
+        body: route.body
+    }
+    return fetch(URL, fetchOptions).then(rj => rj.json());
+}
+
 ```
 
 one major advantage defining routes this way is we get auto complete, and refactoring is extremely easy.
@@ -123,7 +136,7 @@ const MOCK_RESPONSE_DEFINITION = {
 //usually in a separate location join the 2 definitions (ROUTES + MOCK)
 const MOCK_JOINED_DEF = RouteCreator.joinResponseRoutes(MY_ROUTES, MOCK_RESPONSE_DEFINITION);
 //Run Mock server
-AutoMock.autoMock(MOCK_JOINED_DEF,{port:3004});
+AutoMock.mock(MOCK_JOINED_DEF,{port:3004});
 ```
 
 as you can see above there are various ways to create mock data, simplest is by utilizing the random values generator [faker-js](https://github.com/marak/Faker.js/) under the hood to parse string and create random values.
@@ -137,29 +150,35 @@ i.e. in the above example we used
             }
         ]
 ```
+
 in the above example, cars gets an array, telling the mock server this is an array value, the object inside the array is what will fill the array.
 
 In the object above we mock the car object, focusing on the `object.id`, its value is generated with the following pattern
-````Javascript
+
+```Javascript
  { id: "{{datatype.uuid}}:string" }
-````
+```
+
 where `"{{datatype.uuid}}"` part is the pattern for generating random uuid (uses [faker-js](https://github.com/marak/Faker.js/) syntax) and `string` marks the data type to convert into.
 
 note you can also generate your own values using a function instead of a string value.
 i.e.
-````Javascript
+
+```Javascript
 year: (url)=>"200"+Math.floor(Math.random()*10), // will be generated once on bring up
-````
-By returning another function from that function you can generate values at run time. 
+```
+
+By returning another function from that function you can generate values at run time.
 To learn more read below
-````Javascript
+
+```Javascript
 year: ()=>()=>"200"+Math.floor(Math.random()*10), // will be regenerated on every request
-````
+```
 
 ## Defining Request Routes
 
 Define your routes by creating a Object representing routes as a tree
-i.e. if you have the following route `/cars/:id/speed` it will be represented as 
+i.e. if you have the following route `/cars/:id/speed` it will be represented as
 
 ```Javascript
 let ROUTES = {
@@ -167,74 +186,97 @@ let ROUTES = {
         id:{
             [DYNAMIC]: "cid", //more on this below
             speed:{
-                // route definitions  
+                // route definitions
             }
         }
     }
 }
 ```
-adding a different route `/cars/:id/passenger`  requires only to add another child under id.
+
+adding a different route `/cars/:id/passenger` requires only to add another child under id.
 by using the following symbols, inside each paths object you can describe the request as follows:
 
-| Request Symbols  | Definition  |
-|---|---|
-| PROTOCOL  | used to define route protocol (defaults to GET, use RouteCreator.METHOD for enums)  |
-| DYNAMIC  | a string value that marks this part of route as dynamic, i.e. `/cars/:id` the id part is dynamic and should be supplied for request, if not an error will be issued. the value should be a unique name used to reference this id later on |
-| NAME  |  a string value used to change the default name of the path part, which is the path object key |
-| QUERY  | used to define the request query param keys, if wrong keys supplied a warning is issued, can receive a string array (i.e. `["limit","StartFrom"]`) defining the query keys, or a function for any custom validation or processing you might require (see [example](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)) |
-| BODY  | function given here will be used on supplied body and replace route body with its return value   |
+| Request Symbols | Definition                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PROTOCOL        | used to define route protocol (defaults to GET, use RouteCreator.METHOD for enums)                                                                                                                                                                                                                                                                                          |
+| DYNAMIC         | a string value that marks this part of route as dynamic, i.e. `/cars/:id` the id part is dynamic and should be supplied for request, if not an error will be issued. the value should be a unique name used to reference this id later on                                                                                                                                   |
+| NAME            | a string value used to change the default name of the path part, which is the path object key                                                                                                                                                                                                                                                                               |
+| QUERY           | used to define the request query param keys, if wrong keys supplied a warning is issued, can receive a string array (i.e. `["limit","StartFrom"]`) defining the query keys, or a function for any custom validation or processing you might require (see [example](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)) |
+| BODY            | function given here will be used on supplied body and replace route body with its return value                                                                                                                                                                                                                                                                              |
 
- 
- once definition is complete, routes should  be initialized using the init function `initRoutes(ROUTES)`
- 
+once definition is complete, routes should be initialized using the init function `initRoutes(ROUTES)`
+
 note this function works in place and does not return a value, this is to alow the definition object to retain its structure and features such as refactor auto complete and such.
 
 A full example of routes [here](https://github.com/mikehn/autoRouteJs/blob/master/example/DefinitionExample/RoutesDefinitionExample.js)
 
 ## Using request routes definition
+
 once you have routes defined and initialized you can use them to generate your request path and headers by calling the `RouteCreator.getRoute` function
 
-for example 
-````Javascript
+for example
+
+```Javascript
 let options = {
      pathArgs: { "cid": "mike" }, // Note "cid" is the DYNAMIC name we gave earlier in route definition
-     queryParams: [2, 0, true] 
+     queryParams: [2, 0, true]
 };
 
-let  route = getRoute(ROUTES.cars.id.checkups, options); 
+let  route = getRoute(ROUTES.cars.id.checkups, options);
 // /cars/mike?carsLimit=10&carsType=subaru&carsColor=red
-````
+```
 
 ### getRoute API
+
 ```Javascript
 let route = getRoute(routeObject,Options)
 ```
+
 gets the route object of the given path and options.
 
 <b>arguments</b>
-* <b>routeObject</b> - is a path in the previously defined ROUTE object.
-* <b>Options</b> - an object in the following format `{pathArgs:..., queryParams:...,bodyParams:,...}` where:
-  * `pathArgs` - holds the paths dynamic parts values, should be an object with the key matching the name given in the `[DYNAMIC]` part of the route and the value the path value. i.e. `{cid:1234}` will replace the car id part of the route with `1234`
-  * `queryParams` - hold the query param values can be an object with key/value matching the query param name and value or an array of values fitting query param declaration order
-  * bodyParams - holds body of message, can be in any format, if `[BODY]` was supplied in route, this value will be passed through the `[BODY]` function first. 
+
+- <b>routeObject</b> - is a path in the previously defined ROUTE object.
+- <b>Options</b> - an object in the following format `{pathArgs:..., queryParams:...,bodyParams:,...}` where:
+  - `pathArgs` - holds the paths dynamic parts values, should be an object with the key matching the name given in the `[DYNAMIC]` part of the route and the value the path value. i.e. `{cid:1234}` will replace the car id part of the route with `1234`
+  - `queryParams` - hold the query param values can be an object with key/value matching the query param name and value or an array of values fitting query param declaration order
+  - bodyParams - holds body of message, can be in any format, if `[BODY]` was supplied in route, this value will be passed through the `[BODY]` function first.
 
 <b>return value</b>
 
- object representing the route and all its data
+object representing the route and all its data
 object has following properties:
 
-* `route.path()` - returns the string representation of the path with query params and path parts
-* `route.body` -  request body 
-* `route.protocol` - request protocol
+- `route.path()` - returns the string representation of the path with query params and path parts
+- `route.body` - request body
+- `route.protocol` - request protocol
 
+usage Example
 
-// WIP
+```Javascript
+// route is defined and supplied with path argument
+// if argument was missing a warning would be issued
+let CAR_ROUTE = getRoute(MY_ROUTES.cars.id, { pathArgs: { [DKEY_CAR_ID]: "1234" } });
+//fetch wrapper
+fetchExample(CAR_ROUTE).then(car=>console.log());
 
+//function takes the route object and constructs a fetch request
+function fetchExample(route) {
+    const BASE_API = "http://localhost:3004";
+    const URL = BASE_API + route.path();
+    let fetchOptions = {
+        method: route.protocol,
+        body: route.body
+    }
+    return fetch(URL, fetchOptions).then(rj => rj.json());
+}
+```
+
+## Mock definition
+
+Bu default you can run mock as is on all routes, you will however receive a message for every route that no definition was supplied, to define return values, you can add definitions on the routes object itself, which is not recommended as you want to separate routes definition from the mock definition.
 
 see full usage example [here](https://github.com/mikehn/autoRouteJs/blob/master/example/EndUsageExample/ClientUsageExample.js)
-
-
-
 
 [npm-image]: https://img.shields.io/npm/v/auto-route-creator.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/auto-route-creator

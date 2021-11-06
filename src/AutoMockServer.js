@@ -2,6 +2,7 @@
 //let { Routes, getRoute } = require("../src/services/network/Routes");
 //let { Routes } = require("./MockTemplate");
 let { SYMBOLS, METHOD, getRoute } = require("./RouteCreator");
+let DEFAULT_RES_MARKER = Symbol("DEFAULT_RES_MARKER");
 let faker = require("faker");
 var fs = require("fs");
 var express = require("express");
@@ -27,6 +28,7 @@ let mockData = {};
 let routeMeta = {};
 let dRoutes = {};
 let dataSize = null;
+let defaultRes = null;
 
 function getRandomInt(min, max) {
 	min = Math.ceil(min);
@@ -90,8 +92,12 @@ function addDynamicValues(val, req, proto, filter = IDENT) {
 function initPath(proto, req, res) {
 	let url = req.baseUrl + req.path;
 
-	if (!mockData[url]) {
-		res.send(EMPTY_RES);
+	if (!mockData[url] || mockData[url][proto].data == DEFAULT_RES_MARKER) {
+		if (defaultRes) {
+			defaultRes(req, res);
+		} else {
+			res.send(EMPTY_RES);
+		}
 		return;
 	}
 
@@ -130,11 +136,13 @@ function initServerPaths(app) {
 }
 
 
-/////////////
+/**
+ * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{}}
+ */
 function startMock(routes, options = {}, app = app,) {
 	let port = options.port || PORT;
 	dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE
-
+	defaultRes = options.defaultRes;
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
 	initServerPaths(app);
@@ -296,7 +304,7 @@ function updateDataSet(route, baseRoute) {
 	let routRes = route[SYMBOLS.RESPONSE];
 	if (!routRes) {
 		pathList.forEach((path) => {
-			addMockData(path, routeProtocol, EMPTY_RES, route);
+			addMockData(path, routeProtocol, DEFAULT_RES_MARKER, route);
 		});
 		return pathList;
 	}

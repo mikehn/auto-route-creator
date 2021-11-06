@@ -2,3 +2,4 @@ TODO: Add multi protocol support in one method. (allow array in protocol method)
 TODO: Add support for more then json return type
 TODO: Add custom parsing engine for mock template strings.
 TODO: Enable auto route creation based on openAPI.
+TODO: Add defaults support for defined routes without mock / for undefined routes.

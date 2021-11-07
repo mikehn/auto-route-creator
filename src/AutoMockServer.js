@@ -211,6 +211,8 @@ function convertValue(data, type) {
 
 function getValueFromString(str, params) {
 	let { type, name } = getStrParts(str);
+	if (name.length == 0) return "";
+
 	if (name[0] == '[' && name[name.length - 1] == ']') {
 		name = str.substring(1, name.length - 1);
 		let parts = name.split("|");
@@ -223,7 +225,7 @@ function getValueFromString(str, params) {
 
 function updateArrayData(arr, params) {
 	const TEMPLATE_LOC = 0;
-	if (!arr || arr.length == 0) return;
+	if (!arr || arr.length == 0) return [];
 	let template = arr[TEMPLATE_LOC];
 	let data = new Array(dataSize);
 	for (let i = 0; i < data.length; ++i) {

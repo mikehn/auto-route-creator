@@ -114,7 +114,9 @@ const MOCK_RESPONSE_DEFINITION = {
                         id: "{{datatype.uuid}}:string",
                         manufacturer: "{{vehicle.manufacturer}}:string",
                         model: "{{vehicle.model}}:string",
-                        pass: () => () => Math.floor(Math.random() * 10)
+                        pass: () => () => Math.floor(Math.random() * 10),
+                        fuelTypes: [],
+                        owner: ""
                     }
                 ],
             },

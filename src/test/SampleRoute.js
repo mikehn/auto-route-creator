@@ -116,7 +116,8 @@ const MOCK_RESPONSE_DEFINITION = {
                         model: "{{vehicle.model}}:string",
                         pass: () => () => Math.floor(Math.random() * 10),
                         fuelTypes: [],
-                        owner: ""
+                        owner: "",
+                        cost: null
                     }
                 ],
             },

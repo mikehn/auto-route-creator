@@ -167,12 +167,17 @@ function logError(...str) {
 
 function getStrParts(str) {
 	const DELIM = ":";
+	if (str === "")
+		return "";
+	if (!str)
+		return str;
+
 	if (!str || str.length == 0) {
 		logError("received wrong string template expected <name>:<type>");
 	}
 	let parts = str.split(DELIM);
 	if (parts.length > 2) {
-		logError("received wrong string template expected <name>:<type>");
+		logError("received wrong string template " + str + " expected <name>:<type>");
 	}
 	if (parts.length == 1) {
 		log(parts[0], " no type was supplied assuming string");
@@ -192,7 +197,7 @@ function dataParser(data, params) {
 	} else if (isString(data)) {
 		return getValueFromString(data, params);
 	} else {
-		logError("template only supports array, object or string but got", data);
+		//logError("template only supports array, object or string but got", data);
 		return null;
 	}
 }
@@ -211,8 +216,8 @@ function convertValue(data, type) {
 
 function getValueFromString(str, params) {
 	let { type, name } = getStrParts(str);
-	if (name.length == 0) return "";
-
+	if (name === "") return "";
+	if (!name) return name;
 	if (name[0] == '[' && name[name.length - 1] == ']') {
 		name = str.substring(1, name.length - 1);
 		let parts = name.split("|");

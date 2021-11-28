@@ -75,9 +75,9 @@ function basicConfiguration(app, routes) {
 
 
 
-function addDynamicValues(val, req, proto, filter = IDENT) {
+function addDynamicValues(val, req, proto, resOverride, filter = IDENT) {
 	if (typeof val === 'function') {
-		return val(req, mockData, proto);
+		return val(req, mockData, proto, resOverride);
 	} else {
 		if (isObject(val) || Array.isArray(val)) {
 			Object.keys(val).forEach(key => {
@@ -107,7 +107,12 @@ function initPath(proto, req, res) {
 		mockData[url][METHOD.GET] = { data: req.body };
 	}
 	let mockObj = mockData[url][proto];
-	res.json(addDynamicValues(mockObj.data, req, proto, mockObj.filter));
+	let isResponseOverride = false;
+	let resOverride = () => { isResponseOverride = true; return res };
+	let jsonRes = addDynamicValues(mockObj.data, req, proto, resOverride, mockObj.filter);
+	if (!isResponseOverride) {
+		res.json(jsonRes);
+	}
 }
 
 function initServerPaths(app) {

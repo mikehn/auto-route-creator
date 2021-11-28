@@ -64,7 +64,11 @@ const ROUTES1 = {
         permissions: {
             users: {
 
+            },
+            verify: {
+
             }
+
         }
     },
 };
@@ -135,7 +139,7 @@ const MOCK_RESPONSE_DEFINITION = {
         id: {
             [RESPONSE]: {
                 template: (url) => (req, mData, proto) => {
-                    let allCars = mData["/cars"][METHOD.GET].cars;
+                    let allCars = mData["/cars"][METHOD.GET].data.cars;
                     let id = req.params[DKEY_CAR_ID];
                     let selected = allCars.find(car => car.id === id);
                     let vin = faker.vehicle.vin();
@@ -157,7 +161,17 @@ const MOCK_RESPONSE_DEFINITION = {
                 }
             }
         },
-
+        permissions: {
+            [RESPONSE]: {
+                template: () => (req, mockData, proto, resOverride) => {
+                    // example how to override response, 
+                    // once you invoke resOverride, you must handle response yourself
+                    let res = resOverride();
+                    res.status(401);
+                    res.send('User does not have permission to view this section');
+                }
+            }
+        }
     }
 }
 

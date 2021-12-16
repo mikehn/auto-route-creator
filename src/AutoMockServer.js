@@ -5,6 +5,8 @@ let { SYMBOLS, METHOD, getRoute } = require("./RouteCreator");
 let DEFAULT_RES_MARKER = Symbol("DEFAULT_RES_MARKER");
 let faker = require("faker");
 var fs = require("fs");
+let http = require('http');
+let https = require('https');
 var express = require("express");
 var app = express();
 let log = (...msg) => { console.log(...msg) };
@@ -142,16 +144,18 @@ function initServerPaths(app) {
 
 
 /**
- * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{}}
+ * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{},https:{key: privateKey, cert: certificate}}
  */
 function startMock(routes, options = {}, app = app,) {
-	let port = options.port || PORT;
+	const port = options.port || PORT;
+	const httpsCredentials = options.https; // {key: privateKey, cert: certificate};
 	dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE
 	defaultRes = options.defaultRes;
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
 	initServerPaths(app);
-	app.listen(port, () => log(`Mock server on port ${port}!`));
+	const server = httpsCredentials ? https.createServer(httpsCredentials, app) : http.createServer(app);
+	server.listen(port, () => log(`Mock server on port ${port}!`));
 }
 
 function isString(value) {

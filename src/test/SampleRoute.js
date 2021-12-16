@@ -229,5 +229,7 @@ function mockFetch(route) {
     }
 
 }
-
+//let fs = require("fs");
+//var key = fs.readFileSync("key");
+//var cert = fs.readFileSync("cert");
 mock(ROUTES1, { defaultRes: (req, res) => { res.sendStatus(404); } });

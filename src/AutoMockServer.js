@@ -90,6 +90,18 @@ function addDynamicValues(val, req, proto, resOverride, filter = IDENT) {
 	return filter(val, req);
 }
 
+function deepClone(val, res = {}, currentKey = null) {
+	if(!(isObject(val) || Array.isArray(val))){
+		return val;
+	}else{
+		res=Array.isArray(val)?[]:{};
+		Object.keys(val).forEach(key => {
+			res[key] = deepClone(val[key], res[key], key)
+		})
+	}
+	return res;
+}
+
 
 function initPath(proto, req, res) {
 	let url = req.baseUrl + req.path;
@@ -111,7 +123,7 @@ function initPath(proto, req, res) {
 	let mockObj = mockData[url][proto];
 	let isResponseOverride = false;
 	let resOverride = () => { isResponseOverride = true; return res };
-	let jsonRes = addDynamicValues(mockObj.data, req, proto, resOverride, mockObj.filter);
+	let jsonRes = addDynamicValues(deepClone(mockObj.data), req, proto, resOverride, mockObj.filter);
 	if (!isResponseOverride) {
 		res.json(jsonRes);
 	}

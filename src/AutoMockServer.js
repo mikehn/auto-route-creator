@@ -11,8 +11,8 @@ var express = require("express");
 var app = express();
 let log = (...msg) => { console.log(...msg) };
 
-const { DELETE, GET, POST, PUT } = METHOD;
-const AppMethod = { [DELETE]: "delete", [GET]: "get", [POST]: "post", [PUT]: "put" };
+const { DELETE, GET, POST, PUT, PATCH } = METHOD;
+const AppMethod = { [DELETE]: "delete", [GET]: "get", [POST]: "post", [PUT]: "put", [PATCH]: "patch" };
 const EMPTY_RES = "No response definition for this route";
 const PROTOCOL = "protocol";
 const PORT = 3002;
@@ -91,10 +91,10 @@ function addDynamicValues(val, req, proto, resOverride, filter = IDENT) {
 }
 
 function deepClone(val, res = {}, currentKey = null) {
-	if(!(isObject(val) || Array.isArray(val))){
+	if (!(isObject(val) || Array.isArray(val))) {
 		return val;
-	}else{
-		res=Array.isArray(val)?[]:{};
+	} else {
+		res = Array.isArray(val) ? [] : {};
 		Object.keys(val).forEach(key => {
 			res[key] = deepClone(val[key], res[key], key)
 		})

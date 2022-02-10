@@ -19,6 +19,7 @@ const METHOD = {
     POST: 'POST',
     PUT: 'PUT',
     DELETE: 'DELETE',
+    PATCH: 'PATCH'
 }
 
 const EMPTY = null;

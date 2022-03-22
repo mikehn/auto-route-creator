@@ -240,7 +240,8 @@ mock(ROUTES1, {
             res.set("x-mock-data", "true");
         }
         next();
-    }
+    },
+    log: true, // Can also be a custom logging function (...msg)=>{}
     //port: 3400,
     //defaultRes: (req, res) => res.sendStatus(404),
     //https: { key, cert },

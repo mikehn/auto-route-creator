@@ -9,7 +9,7 @@ let http = require('http');
 let https = require('https');
 var express = require("express");
 var app = express();
-let log = (...msg) => { console.log(...msg) };
+let log = () => { /* default is no logging */ };
 
 const { DELETE, GET, POST, PUT, PATCH } = METHOD;
 const AppMethod = { [DELETE]: "delete", [GET]: "get", [POST]: "post", [PUT]: "put", [PATCH]: "patch" };
@@ -130,7 +130,6 @@ function initPath(proto, req, res) {
 }
 
 function initServerPaths(app) {
-	//console.log(mockData);
 	Object.keys(dRoutes).forEach(route => {
 		let protocolStrList = dRoutes[route];
 		protocolStrList.forEach(proto => {
@@ -156,7 +155,7 @@ function initServerPaths(app) {
 
 
 /**
- * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{},https:{key: privateKey, cert: certificate,interceptor:(res,req,next,mockData)=>{}}}
+ * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{},https:{key: privateKey, cert: certificate,log:(...msg)=>{},interceptor:(res,req,next,mockData)=>{}}}
  */
 function startMock(routes, options = {}, app = app,) {
 	const port = options.port || PORT;
@@ -164,7 +163,15 @@ function startMock(routes, options = {}, app = app,) {
 	dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE
 	defaultRes = options.defaultRes;
 	if (options.interceptor)
-		app.use(options.interceptor)
+		app.use((req, res, next) => options.interceptor(req, res, next, mockData))
+	if (options.log) {
+		if (typeof options.log === 'function') {
+			log = options.log;
+		} else {
+			//use default logger
+			log = (...msg) => { console.log(...msg) };
+		}
+	}
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
 	initServerPaths(app);
@@ -391,9 +398,6 @@ function updateRoutesData(routes) {
 		//    rKeys.push(...children);
 	}
 }
-
-
-//updateDataSet(Routes.api.example.test);
 
 let autoMock = (routes, options) => startMock(routes, options, app);
 

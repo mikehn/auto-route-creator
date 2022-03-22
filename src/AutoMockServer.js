@@ -156,13 +156,15 @@ function initServerPaths(app) {
 
 
 /**
- * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{},https:{key: privateKey, cert: certificate}}
+ * @param {Object} Options {port,dataSize,defaultRes:(req,res)=>{},https:{key: privateKey, cert: certificate,interceptor:(res,req,next,mockData)=>{}}}
  */
 function startMock(routes, options = {}, app = app,) {
 	const port = options.port || PORT;
 	const httpsCredentials = options.https; // {key: privateKey, cert: certificate};
 	dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE
 	defaultRes = options.defaultRes;
+	if (options.interceptor)
+		app.use(options.interceptor)
 	updateRoutesData(routes);
 	basicConfiguration(app, routes);
 	initServerPaths(app);

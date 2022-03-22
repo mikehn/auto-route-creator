@@ -234,7 +234,13 @@ function mockFetch(route) {
 //var cert = fs.readFileSync("cert");
 mock(ROUTES1, {
     defaultRes: (req, res) => { res.sendStatus(404); },
-    defaultListSize: 4
+    defaultListSize: 4,
+    interceptor: (req, res, next, mData) => {
+        if (mData[req.url]) {
+            res.set("x-mock-data", "true");
+        }
+        next();
+    }
     //port: 3400,
     //defaultRes: (req, res) => res.sendStatus(404),
     //https: { key, cert },

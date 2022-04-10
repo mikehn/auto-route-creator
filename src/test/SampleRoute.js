@@ -135,7 +135,8 @@ const MOCK_RESPONSE_DEFINITION = {
                 let limit = Number((req.query && req.query.limit) || cars.length + 1);
                 let model = (req.query && req.query.model) || null;
                 return cars.slice(start, start + limit).filter((car => model ? car.model === model : true));
-            }
+            },
+            metadata: { id: "mainRoute" }
         },
 
         id: {
@@ -241,6 +242,7 @@ mock(ROUTES1, {
     defaultListSize: 4,
     interceptor: (req, res, next, mData) => {
         if (mData[req.url]) {
+            console.log("Route data :", mData[req.url][req.method].metadata)
             res.set("x-mock-data", "true");
         }
         next();

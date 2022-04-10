@@ -318,6 +318,7 @@ function addMockData(rUrl, routeProtocol, data, route) {
 
 	mockData[rUrl][routeProtocol] = { data };
 	mockData[rUrl][routeProtocol].filter = (route[SYMBOLS.RESPONSE] && route[SYMBOLS.RESPONSE].filter) || IDENT;
+	mockData[rUrl][routeProtocol].metadata = route[SYMBOLS.RESPONSE] && route[SYMBOLS.RESPONSE].metadata;
 
 	routeMeta[rUrl] = routeMeta[rUrl] || {};
 	if (!routeMeta[rUrl][PROTOCOL]) routeMeta[rUrl][PROTOCOL] = [];

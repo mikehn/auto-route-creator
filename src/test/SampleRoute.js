@@ -59,6 +59,10 @@ const ROUTES1 = {
             speedPost: {
                 [NAME]: "speed",
                 [PROTOCOL]: METHOD.POST,
+            },
+            speedPut: {
+                [NAME]: "speed",
+                [PROTOCOL]: METHOD.PUT,
             }
         },
         permissions: {
@@ -98,9 +102,7 @@ const ROUTES2 = {
                 [PROTOCOL]: METHOD.POST,
                 [BODY]: speedPostBody,
                 [QUERY]: QUERY_PARAMS_SPEED
-            }
-
-
+            },
         }
 
     },
@@ -159,6 +161,9 @@ const MOCK_RESPONSE_DEFINITION = {
                         return { speed: `${faker.datatype.number(160 * (isKM ? 1 : 0.62))}${isKM ? "kph" : "mph"}` };
                     }
                 }
+            },
+            speedPut: {
+                [RESPONSE]: {}
             }
         },
         permissions: {
@@ -233,7 +238,6 @@ function mockFetch(route) {
 //var key = fs.readFileSync("key");
 //var cert = fs.readFileSync("cert");
 mock(ROUTES1, {
-    defaultRes: (req, res) => { res.sendStatus(404); },
     defaultListSize: 4,
     interceptor: (req, res, next, mData) => {
         if (mData[req.url]) {

@@ -105,21 +105,22 @@ function deepClone(val, res = {}, currentKey = null) {
 
 function initPath(proto, req, res) {
 	let url = req.baseUrl + req.path;
-
-	if (!mockData[url] || mockData[url][proto].data == DEFAULT_RES_MARKER) {
+	if (!mockData[url] || !mockData[url][proto] || mockData[url][proto].data == DEFAULT_RES_MARKER) {
 		if (defaultRes) {
 			defaultRes(req, res);
-		} else {
+		}
+		else if (mockData[url][METHOD.GET]) {
+			if (proto == METHOD.PUT) {
+				mockData[url][METHOD.GET] = { ...mockData[url][METHOD.GET], data: req.body };
+				res.send(req.body);
+			}
+		}
+		else {
 			res.send(EMPTY_RES);
 		}
 		return;
 	}
 
-	if (proto == METHOD.DELETE) {
-	}
-	if (proto == METHOD.PUT) {
-		mockData[url][METHOD.GET] = { data: req.body };
-	}
 	let mockObj = mockData[url][proto];
 	let isResponseOverride = false;
 	let resOverride = () => { isResponseOverride = true; return res };

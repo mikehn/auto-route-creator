@@ -288,10 +288,7 @@ function getAllValuesBykey(data, key) {
 				res.push(val);
 			}
 		});
-		return res;
-	}
-
-	if (isObject(data)) {
+	} else if (isObject(data)) {
 		if (data[key]) {
 			return data[key];
 		}
@@ -299,7 +296,7 @@ function getAllValuesBykey(data, key) {
 
 		let curRes;
 		for (let i = 0; i < allKeys.length; ++i) {
-			curRes = getAllValuesBykey(data[allKeys[i]], key);
+			curRes = getAllValuesBykey(data[allKeys[i]], key).dkey;
 			// if (curRes.length < res) {
 			// 	res = curRes;
 			// }
@@ -361,7 +358,6 @@ function updateDataSet(route, baseRoute) {
 
 				let { name, type: objKey } = getStrParts(key);
 				let { dkey, dkObj } = getAllValuesBykey(data, objKey);
-				//log("D>",path,key,dkey)
 				dKeyValues[`${path}|${name}`] = dkey; //TODO:M: extract to func
 				dKeyObj[name] = dkObj;
 			});

@@ -1,3 +1,16 @@
+/**
+ * Optional additions (not part of the mock service)
+ * 
+ * This file demonstrates the usage of the route creator engine, where applications can use the route definition
+ * To manage api calls with parameter checking, and structure integrity check.
+ * 
+ * in this specific file we define the rest of the path parameters
+ * 
+ * This is an addition to the mock, users who want to utilize the fact that the route paths are defined in mock,
+ * and instead of recreating this path tree, 
+ * can use it to get the path and have the bonus of path correctness being validated
+ */
+
 import { AutoMock, RouteCreator } from "auto-route-creator";
 let { initRoutes, getRoute, joinResponseRoutes, BIND, METHOD, SYMBOLS } = RouteCreator;
 let { autoMock, setMockData, getMockData } = AutoMock;

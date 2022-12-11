@@ -82,5 +82,5 @@ const MOCK_RESPONSE_DEFINITION = {
     }
 }
 
-
-export { MOCK_RESPONSE_DEFINITION };
+const MOCK_JOINED_DEF = RouteCreator.joinResponseRoutes(ROUTES1, MOCK_RESPONSE_DEFINITION);
+AutoMock.mock(MOCK_JOINED_DEF, { port: 3004 });

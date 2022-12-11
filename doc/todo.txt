@@ -8,5 +8,9 @@ TODO: Add random size array support (for array template creation)
 TODO: Add function to convert template object to random value object
 TODO: Add faker seed option
 TODO: Add export mock values functionality 
+TODO: Add static content support
+TODO: add to template types array, (Object)
+TODO: add support for specific end point override
+TODO: Logging should support levels and message
 
 DONE: Add defaults support for defined routes without mock / for undefined routes.

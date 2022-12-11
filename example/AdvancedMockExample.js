@@ -1,12 +1,11 @@
-import { AutoMock, RouteCreator } from "auto-route-creator";
-import { DKEY_CAR_ID } from "./RoutesDefinitionExample";
-import faker from "faker";
-let { BIND, METHOD, SYMBOLS } = RouteCreator;
-let { setMockData, getMockData } = AutoMock;
+import { AutoMock, mock, PATH_SYMBOLS, METHOD } from "auto-route-creator";
+import { faker } from "@faker-js/faker";
+const { BIND, RESPONSE } = PATH_SYMBOLS;
+const { setMockData } = AutoMock;
+const DKEY_CAR_ID = "CID";
 
-const { RESPONSE } = SYMBOLS;
 
-const MOCK_RESPONSE_DEFINITION = {
+const ROUTES = {
     [RESPONSE]: {
         template: { message: "hello world:String" }
     },
@@ -82,5 +81,4 @@ const MOCK_RESPONSE_DEFINITION = {
     }
 }
 
-const MOCK_JOINED_DEF = RouteCreator.joinResponseRoutes(ROUTES1, MOCK_RESPONSE_DEFINITION);
-AutoMock.mock(MOCK_JOINED_DEF, { port: 3004 });
+mock(ROUTES, { port: 3004 });

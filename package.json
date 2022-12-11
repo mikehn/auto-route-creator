@@ -3,6 +3,7 @@
   "version": "1.2.7",
   "description": "An easy way to define maintain and verify routes",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "module": "dist/index.js",
   "scripts": {
     "build": "tsc",

@@ -9,7 +9,7 @@ import {
   BIND,
 } from './RouteCreator';
 import { autoMock, MockOptions } from './AutoMockServer';
-const PATH_SYMBOLS = SYMBOLS;
+const PATH_SYMBOLS = { ...SYMBOLS, BIND };
 let AutoMock = {};
 if (typeof window === 'undefined') {
   let { autoMock, getMockData, setMockData } = require('./AutoMockServer');
@@ -31,4 +31,4 @@ function mock(routes: Object, options?: MockOptions): void {
   autoMock(routes, options || {});
 }
 
-export { RouteCreator, AutoMock, PATH_SYMBOLS, mock };
+export { RouteCreator, AutoMock, PATH_SYMBOLS, METHOD, mock };

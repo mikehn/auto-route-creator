@@ -12,5 +12,6 @@ TODO: Add static content support
 TODO: add to template types array, (Object)
 TODO: add support for specific end point override
 TODO: Logging should support levels and message
+TODO: Add support for delay (specific route and general);
 
 DONE: Add defaults support for defined routes without mock / for undefined routes.

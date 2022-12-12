@@ -8,7 +8,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "auto-route-creator": "^2.0.0"
+    "auto-route-creator": "^2.0.2"
   },
   "devDependencies": {}
 }

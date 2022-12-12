@@ -29,8 +29,8 @@ const PROTOCOL = 'protocol';
 const PORT = 3002;
 const DEFAULT_DATA_SET_SIZE = 5;
 const TYPES = {
-  BOOL: 'bool',
-  NUMBER: 'number',
+  BOOL: 'BOOL',
+  NUMBER: 'NUMBER',
   STRING: 'STRING',
 };
 const IDENT = (a, req) => a;
@@ -42,6 +42,7 @@ let routeMeta = {};
 let dRoutes = {};
 let dataSize = null;
 let defaultRes = null;
+let templateParser: (str: string, path: string) => any;
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -191,18 +192,14 @@ interface MockOptions {
     mockData: any
   ) => {};
   onMockStart?: () => void;
+  templateParser?: (str: string, path?: string) => any;
 }
 
-/**
- *
- * @param routes
- * @param options
- * @param mApp
- */
 function startMock(routes, options: MockOptions = {}, mApp = app): void {
   const port = options.port || PORT;
   const defaultOnMockStart = () => console.log(`Mock started on Port ${port}`);
   const httpsCredentials = options.https; // {key: privateKey, cert: certificate};
+  templateParser = options.templateParser;
   dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE;
   defaultRes = options.defaultRes;
   if (options.interceptor)
@@ -231,7 +228,7 @@ function startMock(routes, options: MockOptions = {}, mApp = app): void {
 }
 
 function isString(value) {
-  return typeof value === 'string';
+  return typeof value === 'string' || value instanceof String;
 }
 
 function isObject(value) {
@@ -246,25 +243,14 @@ function logError(...str) {
   console.error(...str);
 }
 
-function getStrParts(str) {
+function getStrParts(value: string): { name: any; type: string } {
   const DELIM = ':';
-  if (str === '') return '';
-  if (!str) return str;
-
-  if (!str || str.length == 0) {
-    logError('received wrong string template expected <name>:<type>');
-  }
-  let parts = str.split(DELIM);
-  if (parts.length > 2) {
-    logError(
-      'received wrong string template ' + str + ' expected <name>:<type>'
-    );
-  }
-  if (parts.length == 1) {
-    log(parts[0], ' no type was supplied assuming string');
-    parts = [parts[0], 'string'];
-  }
-  return { name: parts[0], type: parts[1] };
+  let parts = value.split(DELIM);
+  let lastPart = parts.pop();
+  if (parts.length === 0) return { name: lastPart, type: TYPES.STRING };
+  if (!TYPES[lastPart.toUpperCase()])
+    return { name: value, type: TYPES.STRING };
+  return { name: parts.join(DELIM), type: lastPart };
 }
 
 function dataParser(data, params) {
@@ -282,30 +268,37 @@ function dataParser(data, params) {
   }
 }
 
-function convertValue(data, type) {
-  switch (type) {
+function convertValue(data: any, type: string) {
+  let typeUpper = type.toUpperCase();
+  switch (typeUpper) {
     case TYPES.NUMBER:
       return Number(data);
     case TYPES.STRING:
-      return '' + data;
+      return String(data);
     case TYPES.BOOL:
       return `${data}` === 'true';
   }
   return data;
 }
 
-function getValueFromString(str, params) {
-  let { type, name } = getStrParts(str);
-  if (name === '') return '';
-  if (!name) return name;
+function defaultTemplateParser(template: string) {
+  if (!isString(template)) return template;
+
+  let { name, type } = getStrParts(template);
+
   if (name[0] == '[' && name[name.length - 1] == ']') {
-    name = str.substring(1, name.length - 1);
+    name = template.substring(1, name.length - 1);
     let parts = name.split('|');
-    let randInt = getRandomInt(0, Math.max(100, parts.length));
+    let randInt = getRandomInt(0, parts.length * 2);
     name = parts[randInt % parts.length];
   }
 
   return convertValue(faker.helpers.fake(name), type);
+}
+
+function getValueFromString(str, params) {
+  if (templateParser) return templateParser(str, params);
+  return defaultTemplateParser(str);
 }
 
 function updateArrayData(arr, params) {

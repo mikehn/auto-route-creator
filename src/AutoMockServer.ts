@@ -365,6 +365,7 @@ function addMockData(rUrl, routeProtocol, data, route) {
 }
 
 function updateDataSet(route, baseRoute) {
+  const KEY_DELIM = ':';
   let routeProtocol = route[SYMBOLS.PROTOCOL];
   if (!routeProtocol) {
     routeProtocol = METHOD.GET;
@@ -396,7 +397,7 @@ function updateDataSet(route, baseRoute) {
     pathList.forEach((path) => {
       let data = dataParser(routRes.template, path);
       dynamicKeys.forEach((key) => {
-        let { name, type: objKey } = getStrParts(key);
+        let [name, objKey] = key.split(KEY_DELIM);
         let { dkey, dkObj } = getAllValuesBykey(data, objKey);
         dKeyValues[`${path}|${name}`] = dkey; //TODO:M: extract to func
         dKeyObj[name] = dkObj;

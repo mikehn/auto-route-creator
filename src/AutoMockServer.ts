@@ -8,12 +8,43 @@ const DEFAULT_RES_MARKER = Symbol('DEFAULT_RES_MARKER');
 const fs = require('fs');
 let http = require('http');
 let https = require('https');
+
+type LogLevel = 'INFO' | 'ERROR' | 'WARNING' | 'TRACE' | 'DATA';
+type AppMethod = 'delete' | 'get' | 'post' | 'put' | 'patch';
+
+interface MockOptions {
+  port?: number;
+  defaultListSize?: number;
+  defaultRes?: (req: Request, res: Response) => void;
+  https?: { key: Buffer; cert: Buffer };
+  log?: LogLevel[] | ((level: LogLevel, ...msg: string[]) => void);
+  interceptor?: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    mockData: any
+  ) => {};
+  onMockStart?: () => void;
+  templateParser?: (str: string, path?: string) => any;
+}
+
 //var express = require('express');
 var app = express();
-let log = (...msg: string[]) => {
-  /* default is no logging */
-};
-type AppMethod = 'delete' | 'get' | 'post' | 'put' | 'patch';
+
+// Logger
+let logFactory =
+  (enabledLevels: LogLevel[]) =>
+  (level, ...msg) => {
+    if (enabledLevels.includes(level)) console.log(`[${level}]:`, ...msg);
+  };
+/* default logging */
+let log: (level: LogLevel, ...msg: string[]) => void = logFactory([
+  'INFO',
+  'ERROR',
+  'WARNING',
+  'TRACE',
+]);
+
 //type Mockdata = Record<string,Record<AppMethod
 
 const { DELETE, GET, POST, PUT, PATCH } = METHOD;
@@ -82,7 +113,7 @@ function basicConfiguration(app, routes) {
 
   //Logger
   app.use('/', (req, res, next) => {
-    log(`Req:[${req.method}]:${req.url}`);
+    log('TRACE', `Req:[${req.method}]:${req.url}`);
     next();
   });
   // Init Dynamic routes
@@ -116,22 +147,33 @@ function deepClone(val, res = {}, currentKey = null) {
 
 function initPath(proto, req, res) {
   let url = req.baseUrl + req.path;
+
   if (
     !mockData[url] ||
     !mockData[url][proto] ||
     mockData[url][proto].data == DEFAULT_RES_MARKER
   ) {
     if (defaultRes) {
+      log(
+        'TRACE',
+        `No mock definition for ${proto}:${url}, using default response`
+      );
       defaultRes(req, res);
-    } else if (mockData[url][METHOD.GET]) {
-      if (proto == METHOD.PUT) {
-        mockData[url][METHOD.GET] = {
-          ...mockData[url][METHOD.GET],
-          data: req.body,
-        };
-        res.send(req.body);
-      }
+    } else if (mockData[url][METHOD.GET] && proto == METHOD.PUT) {
+      log(
+        'TRACE',
+        `using default definition for ${proto} - inserting body to mock`
+      );
+      mockData[url][METHOD.GET] = {
+        ...mockData[url][METHOD.GET],
+        data: req.body,
+      };
+      res.send(req.body);
     } else {
+      log(
+        'TRACE',
+        `No mock definition for ${proto}:${url}, returning empty response`
+      );
       res.send(EMPTY_RES);
     }
     return;
@@ -140,6 +182,7 @@ function initPath(proto, req, res) {
   let mockObj = mockData[url][proto];
   let isResponseOverride = false;
   let resOverride = () => {
+    log('TRACE', `response override for ${url}`);
     isResponseOverride = true;
     return res;
   };
@@ -151,6 +194,7 @@ function initPath(proto, req, res) {
     mockObj.filter
   );
   if (!isResponseOverride) {
+    log('DATA', `response for ${url}`, JSON.stringify(jsonRes, null, 2));
     res.json(jsonRes);
   }
 }
@@ -168,6 +212,10 @@ function initServerPaths(app) {
   Object.keys(mockData).forEach((url) => {
     Object.keys(mockData[url]).forEach((proto) => {
       let protocolStr = AppMethod[proto];
+      log(
+        'TRACE',
+        `Adding server endpoint for ${proto}:${url == '//' ? '/' : url}`
+      );
       app[protocolStr](url, (req, res) => {
         initPath(proto, req, res);
       });
@@ -176,54 +224,6 @@ function initServerPaths(app) {
     //let protocol = childRoute[SYMBOLS.PROTOCOL];
     //let url = childRoute[SYMBOLS.ROUTE].path({ isMock: true });
     //initServerPaths(childRoute, app);
-  });
-}
-
-interface MockOptions {
-  port?: number;
-  defaultListSize?: number;
-  defaultRes?: (req: Request, res: Response) => void;
-  https?: { key: Buffer; cert: Buffer };
-  log?: (...msg: string[]) => void;
-  interceptor?: (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-    mockData: any
-  ) => {};
-  onMockStart?: () => void;
-  templateParser?: (str: string, path?: string) => any;
-}
-
-function startMock(routes, options: MockOptions = {}, mApp = app): void {
-  const port = options.port || PORT;
-  const defaultOnMockStart = () => console.log(`Mock started on Port ${port}`);
-  const httpsCredentials = options.https; // {key: privateKey, cert: certificate};
-  templateParser = options.templateParser;
-  dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE;
-  defaultRes = options.defaultRes;
-  if (options.interceptor)
-    mApp.use((req, res, next) => options.interceptor(req, res, next, mockData));
-  if (options.log) {
-    if (typeof options.log === 'function') {
-      log = options.log;
-    } else {
-      //use default logger
-      log = (...msg) => {
-        console.log(...msg);
-      };
-    }
-  }
-  updateRoutesData(routes);
-  basicConfiguration(mApp, routes);
-  initServerPaths(mApp);
-  const server = httpsCredentials
-    ? https.createServer(httpsCredentials, mApp)
-    : http.createServer(mApp);
-  server.listen(port, () => {
-    if (options.onMockStart) options.onMockStart();
-    else defaultOnMockStart();
-    log(`Mock server on port ${port}!`);
   });
 }
 
@@ -246,10 +246,14 @@ function logError(...str) {
 function getStrParts(value: string): { name: any; type: string } {
   const DELIM = ':';
   let parts = value.split(DELIM);
+  const hasType = parts.length > 1;
   let lastPart = parts.pop();
   if (parts.length === 0) return { name: lastPart, type: TYPES.STRING };
-  if (!TYPES[lastPart.toUpperCase()])
+  if (!TYPES[lastPart.toUpperCase().trim()]) {
+    if (hasType)
+      log('WARNING', `Unknown type [${lastPart.trim()}] defaulting to string`);
     return { name: value, type: TYPES.STRING };
+  }
   return { name: parts.join(DELIM), type: lastPart };
 }
 
@@ -457,6 +461,40 @@ function setMockData(
     mockData[path] = {};
   }
   mockData[path][protocol] = { data, filter };
+}
+
+function startMock(routes, options: MockOptions = {}, mApp = app): void {
+  const port = options.port || PORT;
+  const defaultOnMockStart = () => {};
+  const httpsCredentials = options.https; // {key: privateKey, cert: certificate};
+  templateParser = options.templateParser;
+  dataSize = options.defaultListSize || DEFAULT_DATA_SET_SIZE;
+  defaultRes = options.defaultRes;
+  if (options.interceptor)
+    mApp.use((req, res, next) => options.interceptor(req, res, next, mockData));
+
+  if (options.log) {
+    if (Array.isArray(options.log)) log = logFactory(options.log);
+    else if (typeof options.log === 'function') log = options.log;
+    else {
+      log(
+        'ERROR',
+        'Unknown log definition, can only be either log level array, or logging function. see documentation for more details'
+      );
+    }
+  }
+
+  updateRoutesData(routes);
+  basicConfiguration(mApp, routes);
+  initServerPaths(mApp);
+  const server = httpsCredentials
+    ? https.createServer(httpsCredentials, mApp)
+    : http.createServer(mApp);
+  server.listen(port, () => {
+    if (options.onMockStart) options.onMockStart();
+    else defaultOnMockStart();
+    log('INFO', `Mock server on port ${port}!`);
+  });
 }
 
 export { autoMock, getMockData, setMockData, MockOptions };

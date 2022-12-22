@@ -43,11 +43,12 @@ mock(ROUTES, {
     port: 3008,
     defaultListSize: 2,
     defaultRes: (req, res) => {
-        console.log("[defaultRes]: checking default for:", req.url), res.send("Not Found")
+        console.log("[defaultRes]: checking default for:", req.url);
+        res.send("Default response");
     },
-    log: (...msg) => console.log("[LOG]:", ...msg),
+    //log: (level, ...msg) => console.log(`[${level}][${new Date()}]:`, ...msg),
     interceptor: (req, res, next, mockData) => {
-        console.log(mockData);
+        //console.log(mockData);
         console.log("[interceptor] got ", req.url);
         if (req.url == "/health") res.send("GOOD");
         else next();

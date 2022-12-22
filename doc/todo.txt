@@ -1,6 +1,5 @@
 TODO: Add multi protocol support in one method. (allow array in protocol method);
 TODO: Add support for more then json return type
-TODO: Add custom parsing engine for mock template strings.
 TODO: Enable auto route creation based on openAPI.
 TODO: ADD support for predefined dynamic keys list.
 TODO: Add support for custom method on PUT/DELETE/POST...
@@ -11,7 +10,15 @@ TODO: Add export mock values functionality
 TODO: Add static content support
 TODO: add to template types array, (Object)
 TODO: add support for specific end point override
-TODO: Logging should support levels and message
 TODO: Add support for delay (specific route and general);
 
-DONE: Add defaults support for defined routes without mock / for undefined routes.
+
+2.0.4
+-------
+DONE: Logging should support levels and message
+DONE: bug fixes
+DONE: Add custom parsing engine for mock template strings.
+DONE: 
+DONE: bug fixes (dynamic keys splitting)
+
+

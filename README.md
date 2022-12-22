@@ -61,15 +61,57 @@ Code breakdown
 - defines the routes, This is the network path structure of your data, in the example above we defined a single route `const ROUTES = { users: {...}}`
   which corresponds to `http://localhost:3004/users`
 - adds the response template ( `[RESPONSE]: {
-  template:...}` ) to the path locations you want to mock, see below regarding the response template syntax.
+template:...}` ) to the path locations you want to mock, see below regarding the response template syntax.
 - adds optional filter method ( `filter: (responseData, req) => ... ` ) which can be used to filter based on request parameters
 - fires up the mock server `mock(ROUTES, { port: 3004, defaultListSize: 1000 });` here we supplied 2 options `port` and `defaultListSize` but this is optional, below you can see all options and their default values.
 
 ## Template
 
-TBD
+wip
 
 ## Mock Options
+
+mock function accepts an optional seconds argument, the options parameter
+
+| Option          | default value                                  | Description                                                                                                                                                                                                                                                                  |
+| --------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| port            | 3004                                           | `number` - mock server port                                                                                                                                                                                                                                                  |
+| defaultListSize | 5                                              | `number` - sets default size of lists, (all locations where a template was used with an array - template arrays)                                                                                                                                                             |
+| defaultRes      | callback sending default empty message         | `(req,res)=>void` a function that will be called on any existing route that has no template definition                                                                                                                                                                       |
+| interceptor     | undefined                                      | `(req, res, next, mockData)=>void` enables inserting middleware to the mock, which is invoked on every request, mockData contains current mock data at time of request.                                                                                                      |
+| log             | default logging (all levels but DATA)          | `LogLevel[]` or `((level:LogLevel,...msg:string[])=>void)` can place an array of log level which is one of the following strings `'INFO','ERROR','WARNING','TRACE','DATA'` which will use the default logging with given levels, or supply your own method to handle logging |
+| onMockStart     | a callback printing the current port           | `()=>void` a callback that is invoked after mock initializes and has started running                                                                                                                                                                                         |
+| https           | undefined                                      | `{key,cert..}` tls options, only need to supply key and cert to activate mock as https server. all options details are described at [node documentation](https://nodejs.org/api/tls.html#tlscreatesecurecontextoptions)                                                      |
+| templateParser  | default parser (described in template section) | `(template:string,path:string)=>any` provide a custom parser for the template instead of the default parser, given the template and the path return the value to be generated                                                                                                |
+
+Example options usage:
+
+```javascript
+import { mock } from "auto-route-creator";
+import fs from "fs";
+
+const ROUTES = {/*... routes definition*/}
+const key  = fs.readFileSync('server.key', 'utf8');
+const cert = fs.readFileSync('server.crt', 'utf8');
+
+mock(ROUTES, {
+    port: 3008,
+    defaultListSize: 200,
+    defaultRes: (req, res) => {
+        console.log("Default for:", req.url);
+        res.send("Not Found")
+    },
+    log: (...msg) => console.log("[LOG]:", ...msg),
+    interceptor: (req, res, next, mockData) => {
+        console.log("[interceptor] got ", req.url);
+        if (req.url == "/health") res.send("GOOD");
+        else next();
+    },
+    onMockStart: () => { console.log("Mock started") },
+    https: { key, cert },
+    templateParser: (str, path) => path+str.toUpperCase();
+})
+```
 
 ## Advanced usage
 

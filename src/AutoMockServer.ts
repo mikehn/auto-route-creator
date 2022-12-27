@@ -212,10 +212,7 @@ function initServerPaths(app) {
   Object.keys(mockData).forEach((url) => {
     Object.keys(mockData[url]).forEach((proto) => {
       let protocolStr = AppMethod[proto];
-      log(
-        'TRACE',
-        `Adding server endpoint for ${proto}:${url == '//' ? '/' : url}`
-      );
+      log('TRACE', `Adding server endpoint for ${proto}:${url}`);
       app[protocolStr](url, (req, res) => {
         initPath(proto, req, res);
       });
@@ -353,6 +350,7 @@ function getAllValuesBykey(data, key) {
 }
 
 function addMockData(rUrl, routeProtocol, data, route) {
+  if (rUrl == '//') rUrl = '/';
   if (!mockData[rUrl]) {
     mockData[rUrl] = {};
   }

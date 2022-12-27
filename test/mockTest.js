@@ -3,6 +3,10 @@ const { RESPONSE, DYNAMIC, BIND } = PATH_SYMBOLS;
 const UID = "uid";
 
 const ROUTES = {
+    [RESPONSE]: {
+        template: { test: "root test" }
+    },
+
     units: {}, // API with no definition testing default response option for empty paths
     users: {
         [RESPONSE]: {

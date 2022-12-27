@@ -13,12 +13,16 @@ TODO: add support for specific end point override
 TODO: Add support for delay (specific route and general);
 
 
+
+2.0.6
+-------
+TODO:FIX: fix root template not being placed in correct path.
+
 2.0.4
 -------
 DONE: Logging should support levels and message
 DONE: bug fixes
 DONE: Add custom parsing engine for mock template strings.
-DONE: 
 DONE: bug fixes (dynamic keys splitting)
 
 

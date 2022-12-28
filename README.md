@@ -14,12 +14,13 @@ Using auto-route-creator we can serve 1000 users records with just a few lines o
 every user having a unique id with a real random name, email, address and so on.
 
 ```javascript
-import { mock, PATH_SYMBOLS } from 'auto-route-creator';
+import { mock, PATH_SYMBOLS, METHOD } from 'auto-route-creator';
 
-let { RESPONSE } = PATH_SYMBOLS;
+let { RESPONSE ,PROTOCOL} = PATH_SYMBOLS;
 
 const ROUTES = {
   users: {
+    [PROTOCOL]: METHOD.GET // Optional, by default the method is GET
     [RESPONSE]: {
       template: [
         {
@@ -136,3 +137,31 @@ TBD
 
 [npm-image]: https://img.shields.io/npm/v/auto-route-creator.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/auto-route-creator
+
+### Multiple Http Methods
+
+Most of the time a mock only requires GET method and so it is the default, if you require more then GET
+you can add it in `[PROTOCOL]: [...]` field, by placing in an array all protocols, note you will have to supply all corresponding responses `[RESPONSE]:[...]`.
+note there is a special case where you can supply only a single response, and multiple protocols, but `GET` must be first the rest will use the default response.
+
+example of multi method:
+
+```javascript
+import { mock, PATH_SYMBOLS, METHOD } from 'auto-route-creator';
+
+let { RESPONSE ,PROTOCOL} = PATH_SYMBOLS;
+
+const ROUTES = {
+  user: {
+    [PROTOCOL]: [METHOD.GET, METHOD.PUT]
+    [RESPONSE]: [
+      //GET response
+      {template: { id: '{{datatype.uuid}}'}},
+      //PUT response
+      {template: { id: '{{datatype.uuid}}'}}
+    ]
+  }
+}
+
+mock(ROUTES);
+```

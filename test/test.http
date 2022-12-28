@@ -1,0 +1,35 @@
+@base = http://localhost:3008
+
+
+GET {{base}} HTTP/1.1
+
+###
+# @name users
+GET {{base}}/users HTTP/1.1
+
+###
+# @name userById
+
+@uid = {{users.response.body.$[0].id}}
+
+GET {{base}}/users/{{uid}} HTTP/1.1
+
+###
+# @name userCars
+GET {{base}}/users/{{uid}}/cars HTTP/1.1
+
+###
+# @name userFriends
+GET {{base}}/users/{{uid}}/friends HTTP/1.1
+
+###
+PUT {{base}}/users/{{uid}}/friends HTTP/1.1
+content-type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+
+

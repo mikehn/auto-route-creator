@@ -1,5 +1,5 @@
-const { PATH_SYMBOLS, mock } = require("../dist/index");
-const { RESPONSE, DYNAMIC, BIND } = PATH_SYMBOLS;
+const { PATH_SYMBOLS, mock, METHOD } = require("../dist/index");
+const { RESPONSE, DYNAMIC, PROTOCOL, BIND } = PATH_SYMBOLS;
 const UID = "uid";
 
 const ROUTES = {
@@ -39,6 +39,34 @@ const ROUTES = {
                     ageGroup: "[20|30|40|50]:number",
                     heartRate: () => () => 60 + Math.trunc(Math.random() * 60)
                 },
+            },
+
+            cars: {
+                [RESPONSE]: [{
+                    template: [{
+                        model: "{{vehicle.model}}",
+                        class: "[a|b|c]"
+                    }],
+                }],
+                [PROTOCOL]: [METHOD.GET, METHOD.PUT],
+
+            },
+
+            friends: {
+                [RESPONSE]: [{
+                    template: [{
+                        model: "{{name.firstName}}",
+                        degree: "[1|2|3]"
+                    }],
+                },
+                {
+                    template: [{
+                        model: "{{name.firstName}}",
+                        class: "[4|5|6]"
+                    }],
+                }
+                ],
+                [PROTOCOL]: [METHOD.GET, METHOD.PUT],
             }
         }
     }

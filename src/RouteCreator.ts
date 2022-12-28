@@ -20,12 +20,25 @@ interface PathParams {
   bodyParams?: any;
 }
 
-const METHOD = {
+type RouteHttpProtocol =
+  | 'GET'
+  | 'POST'
+  | 'PUT'
+  | 'PATCH'
+  | 'DELETE'
+  | 'HEAD'
+  | 'OPTIONS'
+  | 'TRACE';
+
+const METHOD: Record<RouteHttpProtocol, RouteHttpProtocol> = {
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
   DELETE: 'DELETE',
   PATCH: 'PATCH',
+  HEAD: 'HEAD',
+  OPTIONS: 'OPTIONS',
+  TRACE: 'TRACE',
 };
 
 const EMPTY = null;

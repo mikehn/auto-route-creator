@@ -42,7 +42,7 @@ let log: (level: LogLevel, ...msg: string[]) => void = logFactory([
   'INFO',
   'ERROR',
   'WARNING',
-  'TRACE',
+  'TRACE', //TODO:FIX: remove trace from default
 ]);
 
 //type Mockdata = Record<string,Record<AppMethod
@@ -83,27 +83,31 @@ function getRandomInt(min, max) {
 
 function initDRoutes(routes, baseRoute) {
   //if (!!routes[SYMBOLS.DYNAMIC]) {
-  let proto = routes[SYMBOLS.PROTOCOL];
-  let isArray = Array.isArray(dRoutes[baseRoute]);
-  if (
-    baseRoute.includes(':') &&
-    (!dRoutes[baseRoute] || !isArray || !dRoutes[baseRoute].includes(proto))
-  ) {
-    if (isArray) {
-      dRoutes[baseRoute].push(proto);
-    } else {
-      dRoutes[baseRoute] = [proto];
-    }
-  }
-  //}
-  let rKeys = Object.keys(routes);
 
-  //let currentRouteTree=routes;
-  rKeys.forEach((key) => {
-    let route = routes[key];
-    let dKey = route[SYMBOLS.DYNAMIC];
-    let routeName = !!dKey ? ':' + dKey : getRoute(route).name;
-    initDRoutes(routes[key], baseRoute + '/' + routeName);
+  let protoList = routes[SYMBOLS.PROTOCOL] || [GET];
+  if (!Array.isArray(protoList)) protoList = [protoList];
+  protoList.forEach((proto) => {
+    let isArray = Array.isArray(dRoutes[baseRoute]);
+    if (
+      baseRoute.includes(':') &&
+      (!dRoutes[baseRoute] || !isArray || !dRoutes[baseRoute].includes(proto))
+    ) {
+      if (isArray) {
+        dRoutes[baseRoute].push(proto);
+      } else {
+        dRoutes[baseRoute] = [proto];
+      }
+    }
+    //}
+    let rKeys = Object.keys(routes);
+
+    //let currentRouteTree=routes;
+    rKeys.forEach((key) => {
+      let route = routes[key];
+      let dKey = route[SYMBOLS.DYNAMIC];
+      let routeName = !!dKey ? ':' + dKey : getRoute(route).name;
+      initDRoutes(routes[key], baseRoute + '/' + routeName);
+    });
   });
 }
 
@@ -349,29 +353,33 @@ function getAllValuesBykey(data, key) {
   return { dkey: res, dkObj: data };
 }
 
-function addMockData(rUrl, routeProtocol, data, route) {
+function addMockData(rUrl, routeProtocol, data, routRes) {
   if (rUrl == '//') rUrl = '/';
   if (!mockData[rUrl]) {
     mockData[rUrl] = {};
   }
 
   mockData[rUrl][routeProtocol] = { data };
-  mockData[rUrl][routeProtocol].filter =
-    (route[SYMBOLS.RESPONSE] && route[SYMBOLS.RESPONSE].filter) || IDENT;
-  mockData[rUrl][routeProtocol].metadata =
-    route[SYMBOLS.RESPONSE] && route[SYMBOLS.RESPONSE].metadata;
+  mockData[rUrl][routeProtocol].filter = (routRes && routRes.filter) || IDENT;
+  mockData[rUrl][routeProtocol].metadata = routRes && routRes.metadata;
 
   routeMeta[rUrl] = routeMeta[rUrl] || {};
   if (!routeMeta[rUrl][PROTOCOL]) routeMeta[rUrl][PROTOCOL] = [];
   routeMeta[rUrl][PROTOCOL].push(routeProtocol);
 }
 
+/**
+ * turns non array values to values inside an array, leaves array values untouched
+ * @param value if value not an array, place inside array
+ */
+function convertToArray<t>(value: t | t[]): any[] {
+  if (Array.isArray(value)) return value;
+  return [value];
+}
+
 function updateDataSet(route, baseRoute) {
   const KEY_DELIM = ':';
-  let routeProtocol = route[SYMBOLS.PROTOCOL];
-  if (!routeProtocol) {
-    routeProtocol = METHOD.GET;
-  }
+
   let routeObj = getRoute(route);
   let dId = routeObj.name;
   let pathList = [`${baseRoute}/${dId}`];
@@ -383,31 +391,75 @@ function updateDataSet(route, baseRoute) {
       pathList = dKeyValues[dId].map((id) => `${baseRoute}/${id}`);
   }
 
-  let routRes = route[SYMBOLS.RESPONSE];
-  if (!routRes) {
-    pathList.forEach((path) => {
-      addMockData(path, routeProtocol, DEFAULT_RES_MARKER, route);
-    });
-    return pathList;
+  let routerProtocolList = convertToArray(route[SYMBOLS.PROTOCOL] || [GET]);
+  let responseList = convertToArray(route[SYMBOLS.RESPONSE]);
+
+  const isDefaultResponse =
+    responseList.length == 1 && routerProtocolList.length > 1;
+  const doesResponseMatchProtoList =
+    responseList.length > 1 && routerProtocolList.length != responseList.length;
+
+  //TODO:REF:extract validation to functions
+  //default protocol response cannot be used without GET as first.
+  if (
+    doesResponseMatchProtoList ||
+    (isDefaultResponse && routerProtocolList[0] != GET)
+  ) {
+    if (!isDefaultResponse) {
+      log(
+        'ERROR',
+        `Route ${baseRoute}/${dId} has multiple responses (${responseList.length}) without a matching protocol list (${routerProtocolList.length}). add to [PROTOCOL] field an array with corresponding protocol.`
+      );
+    }
+    let minLength = Math.min(responseList.length, routerProtocolList.length);
+    log(
+      'WARNING',
+      `${baseRoute}/${dId}: Mismatch between response definition count and protocol count, taking only first ${minLength} definitions`
+    );
+    if (isDefaultResponse)
+      log(
+        'WARNING',
+        `${baseRoute}/${dId} cannot be used as default response, as first element in protocol array must be 'GET'`
+      );
+    routerProtocolList = routerProtocolList.slice(0, minLength);
+    responseList = responseList.slice(0, minLength);
+  } else if (isDefaultResponse) {
+    log(
+      'TRACE',
+      `${baseRoute}/${dId} : got [${routerProtocolList.join(
+        ','
+      )}] protocols but only a single response definition, will be using defaults for all others`
+    );
   }
 
-  //let storageKey = routRes.mockId || routeObj.path({ isMock: true });
-  //let dynamicRefs = routRes.dynamicRefs || [];
-  let dynamicKeys = routRes.dynamicKeys || [];
+  for (let i = 0; i < routerProtocolList.length; i++) {
+    let routeProtocol = routerProtocolList[i];
+    let routRes = responseList[i];
 
-  if (routRes.template) {
-    pathList.forEach((path) => {
-      let data = dataParser(routRes.template, path);
-      dynamicKeys.forEach((key) => {
-        let [name, objKey] = key.split(KEY_DELIM);
-        let { dkey, dkObj } = getAllValuesBykey(data, objKey);
-        dKeyValues[`${path}|${name}`] = dkey; //TODO:M: extract to func
-        dKeyObj[name] = dkObj;
+    if (!routRes) {
+      pathList.forEach((path) => {
+        addMockData(path, routeProtocol, DEFAULT_RES_MARKER, routRes);
       });
-      addMockData(path, routeProtocol, data, route);
-    });
-  }
+      return pathList;
+    }
 
+    //let storageKey = routRes.mockId || routeObj.path({ isMock: true });
+    //let dynamicRefs = routRes.dynamicRefs || [];
+    let dynamicKeys = routRes.dynamicKeys || [];
+
+    if (routRes.template) {
+      pathList.forEach((path) => {
+        let data = dataParser(routRes.template, path);
+        dynamicKeys.forEach((key) => {
+          let [name, objKey] = key.split(KEY_DELIM);
+          let { dkey, dkObj } = getAllValuesBykey(data, objKey);
+          dKeyValues[`${path}|${name}`] = dkey; //TODO:M: extract to func
+          dKeyObj[name] = dkObj;
+        });
+        addMockData(path, routeProtocol, data, routRes);
+      });
+    }
+  }
   return pathList;
 }
 
@@ -417,7 +469,7 @@ function updateRoutesData(routes) {
   let rKeys = Object.values(routes).map((val) => ({ val, pathKey }));
   //let rKeys = [{ val: routes, pathKey: "/" }];
   let paths = {};
-  routes[SYMBOLS.PROTOCOL] = routes[SYMBOLS.PROTOCOL] || GET;
+  routes[SYMBOLS.PROTOCOL] = routes[SYMBOLS.PROTOCOL] || [GET];
   //routes[SYMBOLS.NAME] = "/";
   routes[SYMBOLS.ROUTE] = { name: '/' };
   updateDataSet(routes, '');

@@ -547,4 +547,4 @@ function startMock(routes, options: MockOptions = {}, mApp = app): void {
   });
 }
 
-export { autoMock, getMockData, setMockData, MockOptions };
+export { autoMock, getMockData, setMockData, MockOptions, TYPES };

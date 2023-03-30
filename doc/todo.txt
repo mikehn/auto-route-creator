@@ -1,5 +1,4 @@
 TODO: Add support for more then json return type
-TODO: Enable auto route creation based on openAPI.
 TODO: ADD support for predefined dynamic keys list.
 TODO: Add support for custom method on PUT/DELETE/POST...
 TODO: Add random size array support (for array template creation)
@@ -11,12 +10,15 @@ TODO: add to template types array, (Object)
 TODO: add support for specific end point override
 TODO: Add support for delay (specific route and general);
 TODO: simplify route metadata symbols (PROTOCOL,DYNAMIC..) into a single META symbol containing all definitions.
+TODO: Refactor PROTOCOL to METHOD (fix wrong terminology)
 
 
 2.0.6
 -------
 DONE:FIX: fix root template not being placed in correct path.
 DONE:FEATURE: Add multi protocol support in one method. (allow array in protocol method).
+DONE:FEATURE: Add to OpenAPI converter method merge option (use sync keys in mock to get a 1:1 with open api)
+DONE:FEATURE: Enable auto route creation based on openAPI.
 
 2.0.4
 -------

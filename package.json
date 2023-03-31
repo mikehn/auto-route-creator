@@ -1,6 +1,6 @@
 {
   "name": "auto-route-creator",
-  "version": "2.0.4",
+  "version": "2.0.6",
   "description": "An easy way to define maintain and verify routes",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

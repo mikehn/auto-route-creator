@@ -1,6 +1,6 @@
 [![NPM version][npm-image]][npm-url]
 
-Auto route creator enables you to bring up a mock server simulating real looking data in minutes, you only supply a template of the data and Auto Route Creator will generate thousands of random data entries based on the given template. in addition Auto Route Creator is fully customizable and enables adding interceptors, route actions and more
+Auto route creator enables you to bring up a mock server simulating real looking data in minutes, you only supply a template of the data and Auto Route Creator will generate thousands of random data entries based on the given template. in addition Auto Route Creator is fully customizable and enables adding interceptors, route actions, using Open API document for running mock server and more
 
 ## Installation
 
@@ -14,12 +14,13 @@ Using auto-route-creator we can serve 1000 users records with just a few lines o
 every user having a unique id with a real random name, email, address and so on.
 
 ```javascript
-import { mock, PATH_SYMBOLS } from 'auto-route-creator';
+import { mock, PATH_SYMBOLS, METHOD } from 'auto-route-creator';
 
-let { RESPONSE } = PATH_SYMBOLS;
+let { RESPONSE ,PROTOCOL} = PATH_SYMBOLS;
 
 const ROUTES = {
   users: {
+    [PROTOCOL]: METHOD.GET // Optional, by default the method is GET
     [RESPONSE]: {
       template: [
         {
@@ -136,3 +137,80 @@ TBD
 
 [npm-image]: https://img.shields.io/npm/v/auto-route-creator.svg?style=flat-square
 [npm-url]: https://npmjs.org/package/auto-route-creator
+
+### Multiple Http Methods
+
+Most of the time a mock only requires GET method and so it is the default, if you require more then GET
+you can add it in `[PROTOCOL]: [...]` field, by placing in an array all protocols, note you will have to supply all corresponding responses `[RESPONSE]:[...]`.
+note there is a special case where you can supply only a single response, and multiple protocols, but `GET` must be first the rest will use the default response.
+
+example of multi method:
+
+```javascript
+import { mock, PATH_SYMBOLS, METHOD } from 'auto-route-creator';
+
+let { RESPONSE ,PROTOCOL} = PATH_SYMBOLS;
+
+const ROUTES = {
+  user: {
+    [PROTOCOL]: [METHOD.GET, METHOD.PUT]
+    [RESPONSE]: [
+      //GET response
+      {template: { id: '{{datatype.uuid}}'}},
+      //PUT response
+      {template: { id: '{{datatype.uuid}}'}}
+    ]
+  }
+}
+
+mock(ROUTES);
+```
+
+## Mocking Open API document
+
+### mocking directly from Open API document
+
+Using an open API document you can run a mock server
+which adheres to the API specification.
+
+example usage:
+
+```javascript
+const { mockOpenApi } = require('auto-route-creator');
+
+//used to add mock definitions to the open API document by referencing ID's in the document
+const ROUTES = {
+  // path description id
+  logoutUser: {
+    template: {
+      logoutUser: 'user with id {{datatype.uuid}} logged out',
+    },
+    //filter ...
+  },
+  // property param
+  photoUrls: [{ url: '{{internet.url}}', size: '{{datatype.number}}' }],
+};
+
+mockOpenApi('/SampleOA.yaml', ROUTES, { port: 3002, defaultListSize: 4 });
+```
+
+`mockOpenApi` takes 3 arguments,
+
+- OpenAPI document - a path to a document or a json objet
+- reference mock definition - a reference mock definition object where the keys can reference either descriptionId of a path and its value a `[RESPONSE]` as in a regular mock definition. or a key corresponding to a custom open api key `x-mock-ref` with a value of a template.
+- mock options - regular mock options as described above.
+
+### converting an open API document to a mock definition file
+
+example usage:
+
+```javascript
+const { openApiToMockFile } = require('auto-route-creator');
+
+openApiToMockFile('/SampleOA.yaml', './test.js');
+```
+
+`openApiToMockFile` takes 2 argument:
+
+- open API document - path to open api document or open api json
+- output path - output path for the output mock file

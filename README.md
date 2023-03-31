@@ -1,6 +1,6 @@
 [![NPM version][npm-image]][npm-url]
 
-Auto route creator enables you to bring up a mock server simulating real looking data in minutes, you only supply a template of the data and Auto Route Creator will generate thousands of random data entries based on the given template. in addition Auto Route Creator is fully customizable and enables adding interceptors, route actions and more
+Auto route creator enables you to bring up a mock server simulating real looking data in minutes, you only supply a template of the data and Auto Route Creator will generate thousands of random data entries based on the given template. in addition Auto Route Creator is fully customizable and enables adding interceptors, route actions, using Open API document for running mock server and more
 
 ## Installation
 
@@ -165,3 +165,52 @@ const ROUTES = {
 
 mock(ROUTES);
 ```
+
+## Mocking Open API document
+
+### mocking directly from Open API document
+
+Using an open API document you can run a mock server
+which adheres to the API specification.
+
+example usage:
+
+```javascript
+const { mockOpenApi } = require('auto-route-creator');
+
+//used to add mock definitions to the open API document by referencing ID's in the document
+const ROUTES = {
+  // path description id
+  logoutUser: {
+    template: {
+      logoutUser: 'user with id {{datatype.uuid}} logged out',
+    },
+    //filter ...
+  },
+  // property param
+  photoUrls: [{ url: '{{internet.url}}', size: '{{datatype.number}}' }],
+};
+
+mockOpenApi('/SampleOA.yaml', ROUTES, { port: 3002, defaultListSize: 4 });
+```
+
+`mockOpenApi` takes 3 arguments,
+
+- OpenAPI document - a path to a document or a json objet
+- reference mock definition - a reference mock definition object where the keys can reference either descriptionId of a path and its value a `[RESPONSE]` as in a regular mock definition. or a key corresponding to a custom open api key `x-mock-ref` with a value of a template.
+- mock options - regular mock options as described above.
+
+### converting an open API document to a mock definition file
+
+example usage:
+
+```javascript
+const { openApiToMockFile } = require('auto-route-creator');
+
+openApiToMockFile('/SampleOA.yaml', './test.js');
+```
+
+`openApiToMockFile` takes 2 argument:
+
+- open API document - path to open api document or open api json
+- output path - output path for the output mock file

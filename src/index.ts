@@ -41,6 +41,17 @@ let RouteCreator = {
   BIND,
 };
 
+/**
+ * Creates a mock server out of an API document, also enables adding external mock reference object.
+ * @param document Open API document to convert
+ * @param mockRef mock references object to attach to the open API document, this can be done in two ways
+ * adding a key corresponding to an operation id, with a value of a mock [RESPONSE] object i.e.:
+ * { template: {a:"[1|2|3]"} }
+ * adding a key corresponding to a x-mock-ref key on a property of the open api mock,
+ * with a value of a mock template i.e.:
+ * {a:"[1|2|3]"}
+ * @param options mock options
+ */
 function mockOpenApi(
   document: string | OpenAPI.Document,
   mockRef: object = {},

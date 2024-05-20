@@ -14,13 +14,13 @@ Using auto-route-creator we can serve 1000 users records with just a few lines o
 every user having a unique id with a real random name, email, address and so on.
 
 ```javascript
-import { mock, PATH_SYMBOLS, METHOD } from 'auto-route-creator';
-
-let { RESPONSE ,PROTOCOL} = PATH_SYMBOLS;
+const autoMock = require('auto-route-creator')
+const { mock, PATH_SYMBOLS, METHOD } = autoMock
+const { RESPONSE, PROTOCOL } = PATH_SYMBOLS
 
 const ROUTES = {
   users: {
-    [PROTOCOL]: METHOD.GET // Optional, by default the method is GET
+    [PROTOCOL]: METHOD.GET, // Optional, by default the method is GET
     [RESPONSE]: {
       template: [
         {
@@ -35,24 +35,23 @@ const ROUTES = {
           age: () => Math.floor(Math.random() * 100),
           // invoked on every API call
           // (only use if updating values on each call)
-          currentSpeed: () => () => Math.floor(Math.random() * 160),
-        },
+          currentSpeed: () => () => Math.floor(Math.random() * 160)
+        }
       ],
 
       // optional : a filter function
       // that is called every time on the generated response
       filter: (responseData, req) => {
-        let ageFilter = req.query && req.query.age;
-        if (ageFilter)
-          return responseData.filter(({ age }) => age == ageFilter);
-        return responseData;
-      },
-    },
-  },
-};
+        const ageFilter = req.query && req.query.age
+        if (ageFilter) return responseData.filter(({ age }) => age == ageFilter)
+        return responseData
+      }
+    }
+  }
+}
 
 // Start the mock
-mock(ROUTES, { port: 3004, defaultListSize: 1000 });
+mock(ROUTES, { port: 3004, defaultListSize: 1000 })
 ```
 
 calling `http://localhost:3004/users` will retrieve 1000 user entries
